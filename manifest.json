@@ -1,0 +1,26 @@
+{
+  "project": "Black Metal Buddha",
+  "domain": "blackmetalbuddha.com",
+  "planning_date": "2026-09-17",
+  "payments_launch": "Square fiat",
+  "fulfillment": "Printful",
+  "lightning": "deferred",
+  "files": [
+    "README.md",
+    "docs/00_MASTER_PLAN.md",
+    "docs/01_ARCHITECTURE.md",
+    "docs/02_DATA_MODEL.md",
+    "docs/03_SQUARE_INTEGRATION.md",
+    "docs/04_PRINTFUL_INTEGRATION.md",
+    "docs/05_PHASE0_VPS_DEPLOYMENT.md",
+    "docs/06_SECURITY_PRIVACY.md",
+    "docs/07_TESTING_AND_RELEASE.md",
+    "docs/08_OPERATIONS_RUNBOOK.md",
+    "docs/09_PHASE2_MARKETPLACES.md",
+    "docs/10_ADR_LIGHTNING_DEFERRED.md",
+    "docs/11_PHASE3_SEO_MARKETING.md",
+    "docs/12_AGENT_HANDOFF.md",
+    "docs/13_OPEN_DECISIONS.md",
+    "docs/SOURCES.md"
+  ]
+}
