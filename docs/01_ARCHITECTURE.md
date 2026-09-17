@@ -1,49 +1,70 @@
 # Architecture
 
-## Principles
+## Core principle
 
-1. Local database is canonical for ecommerce orders.
-2. Square is canonical for payments.
-3. Printful is canonical for fulfillment.
-4. Payment and fulfillment are separate state machines.
-5. External actions are idempotent.
-6. Webhooks are verified before trusted state changes.
-7. Browser never decides price, tax, shipping, payment completion, or fulfillment eligibility.
-8. No card data reaches our backend.
-9. Lightning is a future adapter, not a launch dependency.
+Black Metal Buddha owns the ecommerce state.
+
+Square owns payment processing.
+
+Printful owns fulfillment.
+
+LNbits and Strike are not in the production architecture.
 
 ## Topology
 
 ```text
-Internet
-   |
-Nginx / TLS
-   |
-FastAPI app
- |-- storefront/cart/checkout
- |-- order service
- |-- Square adapter
- |-- Printful adapter
- |-- webhook handlers
- |-- jobs/reconciliation
- |
-PostgreSQL
-
-FastAPI <--> Square APIs
-FastAPI <--> Printful API
-Square webhooks  --> FastAPI
-Printful webhooks --> FastAPI
+                       Internet
+                          |
+                    blackmetalbuddha.com
+                          |
+                       Nginx/TLS
+                          |
+                    BMB application
+          +---------------+---------------+
+          |               |               |
+       catalog          orders         admin/ops
+          |               |
+          |               +-------------------+
+          |                                   |
+          v                                   v
+      PostgreSQL                         Square Checkout
+                                              |
+                                    Square-hosted payment
+                                              |
+                                        Square webhook
+                                              |
+                                              v
+                                     verified BMB PAID
+                                              |
+                                              v
+                                           Printful
+                                              |
+                                       Printful webhook
+                                              |
+                                              v
+                                         BMB status
 ```
 
-A database-backed jobs table is enough at launch; a separate queue product is optional.
+## Recommended stack
 
-## Suggested modules
+- Nginx
+- Python + FastAPI
+- Jinja2/server-rendered pages
+- minimal JavaScript
+- PostgreSQL
+- systemd
+- Square Checkout/Payment Links API
+- Printful API
+- database-backed retry jobs
+
+A dedicated queue service is optional at launch.
+
+## Application modules
 
 ```text
 app/
   main.py
   config.py
-  db/
   catalog/
   cart/
   orders/
@@ -51,7 +72,6 @@ app/
   payments/
     base.py
     square.py
-    square_lightning.py   # disabled placeholder
   fulfillment/
     printful.py
   webhooks/
@@ -59,11 +79,19 @@ app/
     printful.py
   jobs/
   notifications/
+  admin/
   templates/
   static/
 ```
 
-## Suggested order states
+Do not add an LNbits payment provider module.
+Do not add a Lightning provider module until the Square Lightning ADR is reopened.
+
+## Order state
+
+Keep payment and fulfillment states separate.
+
+Suggested top-level order states:
 
 ```text
 CART
@@ -81,23 +109,56 @@ CANCELED
 REFUNDED
 ```
 
-Also keep independent `payment_state` and `fulfillment_state`.
+## Provider identifiers
 
-## Fulfillment duplicate protection
+For each order keep:
 
-Use the BMB order number as Printful `external_id`.
-
-Before retrying creation, retrieve by `@external_id`. If it already exists, reconcile instead of creating another order.
-
-## Future payment-provider interface
-
-```python
-class PaymentProvider:
-    def create_payment(self, order, payment_source): ...
-    def get_payment(self, payment_id): ...
-    def refund(self, payment_id, amount): ...
-    def verify_webhook(self, request): ...
+```text
+BMB order number
+Square order ID
+Square payment-link ID
+Square payment ID
+Printful external ID
+Printful order ID
 ```
 
-Launch: `SquareFiatPaymentProvider`  
-Future: `SquareLightningPaymentProvider`
+Example:
+
+```text
+BMB-000041
+  ↕
+Square order: ...
+  ↕
+Square payment: ...
+  ↕
+Printful external_id: BMB-000041
+```
+
+## Trust boundaries
+
+### Browser is not authoritative for
+
+- product price
+- discount
+- shipping
+- tax
+- total
+- payment status
+- fulfillment status
+
+### Square is authoritative for
+
+- payment completion
+- Square payment/order identity
+
+### Printful is authoritative for
+
+- fulfillment lifecycle
+- shipment/tracking lifecycle
+
+### Local BMB database is authoritative for
+
+- ecommerce order
+- product snapshot
+- customer shipment request
+- correlation of Square + Printful records

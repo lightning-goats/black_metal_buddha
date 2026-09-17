@@ -1,109 +1,174 @@
-# Master Implementation Plan
+# Master Plan
 
-## Success definition
+## Objective
 
-Black Metal Buddha is ready for launch when:
+Build `blackmetalbuddha.com` as a small, self-hosted print-on-demand store.
 
-- `https://blackmetalbuddha.com` is live on the VPS.
-- The three launch products have approved physical samples.
-- Product, size, price, shipping, and availability are server-controlled.
-- Square payment data is tokenized client-side; card data never touches our backend.
-- Square payment webhooks are verified.
-- Only a trusted `COMPLETED` payment can trigger fulfillment.
-- Paid orders are automatically submitted to Printful.
-- Duplicate webhook delivery cannot cause duplicate charging or fulfillment.
-- Printful shipment data updates the local order.
-- Customers receive confirmation and tracking notifications.
-- Failed/held Printful orders are surfaced.
-- Backups, logs, monitoring, and restore procedures exist.
-- A real production canary order has completed end-to-end.
+The customer should be able to:
 
-## Phase 0 — site and infrastructure
+1. browse products
+2. select size/quantity
+3. check out through Square
+4. receive confirmation
+5. have the order automatically submitted to Printful
+6. receive fulfillment and tracking updates
+
+No order should require manual transfer from Square to Printful.
+
+## Launch collection
+
+Initial designs:
+
+1. **Lotus of the Void** — *No Self • No Fear*
+2. **Dharma of Decay** — *All Things Pass*
+3. **Meditate on Death** — *Emptiness Is Freedom*
+
+## Research conclusion
+
+Square's public APIs support normal online fiat checkout and hosted payment links.
+
+The preferred launch pattern is Square's hosted Checkout / Payment Links API:
+
+```text
+BMB cart
+   ↓
+local BMB order
+   ↓
+Square CreatePaymentLink
+   ↓
+Square-hosted checkout
+   ↓
+verified Square webhook
+   ↓
+Square payment = COMPLETED
+   ↓
+BMB order = PAID
+   ↓
+Printful
+```
+
+This pattern was independently validated by LNbits' Square fiat-provider implementation, but Black Metal Buddha will implement it directly rather than route ecommerce orders through LNbits.
+
+## Why hosted Square checkout
+
+It reduces payment-front-end complexity while preserving our own storefront and order system.
+
+Benefits:
+
+- Square hosts the payment UI
+- Square handles sensitive payment data
+- simpler PCI/security boundary
+- Square order/payment IDs remain available for reconciliation
+- payment status is webhook/API driven
+- card and eligible Square wallet methods can be enabled according to current Square support
+- easier future adaptation if Square later adds Lightning to hosted checkout
+
+## Phase 0 — website and infrastructure
 
 Deliver:
 
-- DNS for apex + `www`
-- Nginx + HTTPS
-- repository
-- staging/production config separation
+- DNS for `blackmetalbuddha.com`
+- HTTPS
+- Nginx
+- application service
 - PostgreSQL
-- systemd app service
-- health endpoint
-- storefront pages: home, shop, product, cart, checkout shell, order status, about, shipping/returns, privacy, terms/contact
-- local catalog
+- home/shop/product/cart/checkout-shell/order-status pages
+- product catalog
+- staging environment
+- logging/backups/health checks
 
-Exit: browsing/cart works on the production domain; real checkout is still disabled.
+No real payment processing is required to exit Phase 0.
 
-## Phase 0.5 — physical samples
+## Phase 0.5 — sample approval
 
-- choose exact Printful blank
-- map sizes/colors
-- upload final art
-- order one sample per design
-- inspect line retention, small text, red reproduction, placement, fabric, fit, wash durability
-- revise if needed
-- shoot real product photos
+Before public launch:
 
-Exit: each public SKU is physically approved.
+- select exact Printful garment blank
+- configure variants
+- upload final artwork
+- order samples
+- inspect print quality, fine detail, placement, red reproduction, fit, and wash durability
+- revise artwork if needed
+- photograph approved products
 
-## Phase 1 — Square + Printful
+## Phase 1 — Square fiat + Printful automation
 
-### Square
+Implement:
 
-Use official Square Web Payments SDK + Payments API.
+- local BMB order state machine
+- Square hosted Checkout/Payment Links API
+- signed Square webhooks
+- server-side amount verification
+- idempotent Square checkout creation
+- Printful product/variant mapping
+- Printful order creation
+- signed Printful webhooks
+- retry/reconciliation jobs
+- transactional confirmation/tracking notifications
+- refund/admin workflow
 
-Initial methods may include:
+### Phase 1 exit criteria
 
-- card
-- Apple Pay
-- Google Pay
-- Cash App Pay
+A real order must complete:
 
-Lightning is not part of Phase 1.
+```text
+customer
+  ↓
+Square
+  ↓
+BMB verified paid state
+  ↓
+Printful
+  ↓
+production
+  ↓
+shipment
+  ↓
+tracking
+```
 
-### Fulfillment flow
+with no manual copying of order data.
 
-1. Customer submits shipping/contact details.
-2. Server recalculates cart from trusted catalog data.
-3. Local order becomes `PENDING_PAYMENT`.
-4. Browser obtains Square payment token.
-5. Backend calls Square with a stable idempotency key.
-6. Verified Square webhook reconciles payment state.
-7. Require correct amount/currency and `COMPLETED`.
-8. Atomically mark local order `PAID`.
-9. Enqueue fulfillment exactly once.
-10. Submit to Printful using BMB order number as `external_id`.
-11. Store Printful IDs/state.
-12. Signed Printful webhooks update production/shipping state.
+## Phase 2 — additional channels
 
-Exit: one real order goes payment -> Printful -> shipment with no manual data transfer.
+After Phase 1 is stable, add marketplaces/ecommerce platforms supported by Printful.
 
-## Phase 2 — marketplaces
-
-Recommended sequence:
+Candidate order:
 
 1. Etsy
 2. Amazon
 3. eBay
-4. TikTok Shop or another channel justified by demand
+4. TikTok Shop or other channel justified by demand
 
-Use Printful native integrations where appropriate. Keep the direct BMB site canonical for the brand.
+Native Printful integrations should be used where they reduce operational burden.
 
 ## Phase 3 — SEO and marketing
 
-Technical SEO starts in Phase 0; traffic acquisition waits until fulfillment is proven.
+Technical SEO begins during Phase 0.
 
-Focus:
+Active acquisition starts only after checkout and fulfillment are proven.
 
-- original product photography
+Focus on:
+
+- real product photography
 - structured product data
 - sitemap/Search Console
-- strong product copy
-- editorial content
+- product storytelling
+- original content
 - marketplace SEO
 - social content
-- paid campaigns only after unit economics are known
+- paid promotion only after unit economics are known
 
-## Future Lightning phase
+## Future Lightning
 
-Revisit only when Square officially supports programmatic online Lightning payments with trustworthy status/webhooks and automatic USD settlement.
+Lightning remains outside the active implementation plan.
+
+Revisit only when Square exposes an official developer API that can:
+
+1. initiate/accept an online Lightning payment
+2. associate it with a Square/BMB order
+3. expose reliable server-verifiable status/webhooks
+4. automatically settle the payment to fiat/USD
+5. require no manual BTC sale/conversion before Printful fulfillment
+
+See `10_ADR_LIGHTNING_DEFERRED.md`.

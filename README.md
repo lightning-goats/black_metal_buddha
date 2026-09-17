@@ -1,53 +1,24 @@
-# Black Metal Buddha — Project Planning Package
+# Black Metal Buddha
 
-**Domain:** `blackmetalbuddha.com`  
-**Planning date:** 2026-09-17  
-**Primary storefront:** self-hosted on the existing VPS  
-**Payments:** Square fiat payments at launch  
-**Fulfillment:** Printful  
-**Lightning:** deferred until Square exposes a supported Bitcoin/Lightning API suitable for online checkout
+Planning and implementation repository for `blackmetalbuddha.com`.
 
-## Goal
+## Current architecture decision
 
-Launch a small, automated print-on-demand ecommerce site. A customer selects a product, pays through Square, and the order is submitted to Printful without manual transfer.
+Black Metal Buddha owns its own storefront, cart, order database, Square integration, and Printful fulfillment.
 
-## Launch collection
-
-1. **Lotus of the Void** — *No Self • No Fear*
-2. **Dharma of Decay** — *All Things Pass*
-3. **Meditate on Death** — *Emptiness Is Freedom*
+- **Square fiat checkout is the launch payment path.**
+- **Printful is the launch fulfillment provider.**
+- **LNbits and Strike are not part of the Black Metal Buddha payment architecture.**
+- **Lightning is explicitly on hold** until Square provides an official API that can accept Lightning for an online order, report payment status reliably, and automatically settle proceeds into fiat/USD without manual conversion.
 
 ## Phases
 
-- **Research:** Square + Printful capabilities
-- **Phase 0:** deploy `blackmetalbuddha.com` on the VPS
-- **Phase 0.5:** order and approve physical samples
-- **Phase 1:** Square fiat checkout + automated Printful fulfillment
-- **Phase 2:** add Printful-supported marketplaces/ecommerce channels
+- **Research:** verify current Square and Printful APIs and limitations
+- **Phase 0:** deploy the Black Metal Buddha website on the VPS
+- **Phase 0.5:** approve physical samples
+- **Phase 1:** Square fiat checkout + fully automated Printful fulfillment
+- **Phase 2:** expand to Printful-supported marketplaces/ecommerce platforms
 - **Phase 3:** SEO, content, analytics, and marketing
-- **Future:** add Square Lightning only when an official API supports it
+- **Future Lightning:** only after the Square API satisfies the automated Lightning-to-fiat requirement
 
-## Recommended reference stack
-
-- Nginx
-- Python + FastAPI
-- Jinja2 templates
-- Minimal browser JavaScript
-- Square Web Payments SDK on checkout
-- PostgreSQL
-- systemd
-- Printful API + signed v2 webhooks
-- Square signed webhooks
-
-Containerization is optional.
-
-## Launch non-goals
-
-- customer accounts
-- saved cards
-- loyalty
-- custom product designer
-- subscriptions
-- cryptocurrency custody
-- custom Lightning node integration
-- native mobile app
+See `docs/`.

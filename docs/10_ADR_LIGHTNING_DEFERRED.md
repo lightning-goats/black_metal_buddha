@@ -1,42 +1,66 @@
-# ADR-001 — Defer Lightning Checkout
+# ADR-001 — Lightning Deferred Until Square Provides Automated Fiat Settlement
 
 **Status:** Accepted  
 **Date:** 2026-09-17
 
-## Context
+## Requirement
 
-Black Metal Buddha eventually intends to offer a 10% Lightning discount.
+Black Metal Buddha eventually wants to offer Lightning payments, potentially with a 10% discount.
 
-Square supports Bitcoin/Lightning in first-party seller products and can settle eligible Bitcoin payments into USD, but its current public custom-online-payment interfaces do not expose Lightning as a Web Payments SDK / Payments API source.
+However, the required production flow is:
 
-The project requires fully automated fulfillment and no manual BTC-to-USD conversion.
+```text
+customer Lightning payment
+        ↓
+Square
+        ↓
+automatic fiat/USD settlement
+        ↓
+normal BMB paid-order flow
+        ↓
+Printful
+```
+
+There must be **no manual BTC-to-USD conversion** and no human step required before Printful fulfillment.
+
+## Current limitation
+
+Square supports Bitcoin/Lightning in first-party Square products, but its public custom-ecommerce APIs do not currently expose the complete programmatic Lightning checkout flow required by BMB.
 
 ## Decision
 
-Lightning is deferred.
+Do not implement Lightning through:
 
-Phase 1 uses official Square fiat-capable APIs only.
+- LNbits
+- Strike
+- Core Lightning
+- BTCPay
+- another crypto processor
+- undocumented Square endpoints
+- external crypto payments merely recorded in Square
 
-We will not:
+These approaches do not satisfy the project's required Square-mediated automated Lightning-to-fiat flow.
 
-- reverse engineer undocumented Square endpoints
-- accept Lightning through our own CLN node for launch
-- add a second crypto processor during launch
+## Revisit criteria
 
-## Revisit trigger
+Reopen Lightning implementation only when Square officially provides APIs that can:
 
-Reopen when Square officially supports:
+1. create/initiate an online Lightning payment
+2. tie it to the BMB/Square order
+3. report payment status via trustworthy API/webhook events
+4. automatically settle proceeds to USD/fiat
+5. integrate without manual conversion before Printful fulfillment
 
-1. programmatic online Lightning initiation
-2. reliable USD-denominated reconciliation
-3. trustworthy payment status/webhooks
-4. automatic USD settlement
+## Future UX
 
-## Intended future pricing
+When all criteria are met:
 
 ```text
-Card:       $40.00
-Lightning:  $36.00
+Card / wallet:      $40.00
+Lightning:          $36.00
+                    Save 10%
 ```
 
-The 10% discount must be server-calculated.
+The discount must be calculated server-side.
+
+Until then, no Lightning payment option should be shown on the BMB storefront.
