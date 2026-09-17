@@ -1,0 +1,61 @@
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class Product:
+    slug: str
+    name: str
+    subtitle: str
+    summary: str
+    description: str
+    image: str
+    image_alt: str
+    sku: str
+
+
+PRODUCTS = (
+    Product(
+        slug="lotus-of-the-void",
+        name="Lotus of the Void",
+        subtitle="No Self. No Fear.",
+        summary="A skeletal meditation on non-self, mortality, and the stillness inside the void.",
+        description=(
+            "Lotus of the Void places a skeletal contemplative figure beneath an eclipse halo, "
+            "framed by ravens, smoke, and a thorned lotus. The piece joins black-metal visual "
+            "language with themes of impermanence and non-self."
+        ),
+        image="/prints/lotus_of_the_void_REFERENCE_ONLY.jpg",
+        image_alt="Black T-shirt mockup for Lotus of the Void, featuring a skeletal meditating figure and red eclipse halo.",
+        sku="BMB-LOTUS",
+    ),
+    Product(
+        slug="dharma-of-decay",
+        name="Dharma of Decay",
+        subtitle="All Things Pass.",
+        summary="A mountain stupa, ravens, candles, and a bone-wheel reminder that every form changes.",
+        description=(
+            "Dharma of Decay centers a weathered stupa beneath a bone-and-thorn wheel, with ravens, "
+            "candles, mist, and a muted red lunar accent. Its theme is simple: all conditioned things "
+            "change, and every form passes."
+        ),
+        image="/prints/dharma_of_decay_REFERENCE_ONLY.jpg",
+        image_alt="Black T-shirt mockup for Dharma of Decay, featuring a mountain stupa, ravens, candles, and red lunar accent.",
+        sku="BMB-DHARMA",
+    ),
+    Product(
+        slug="meditate-on-death",
+        name="Meditate on Death",
+        subtitle="Emptiness Is Freedom.",
+        summary="A stark memento mori built around meditation, prayer beads, lotus petals, and a blood-red sun.",
+        description=(
+            "Meditate on Death is a memento mori rendered as ritual apparel: a skeletal monk, prayer "
+            "beads, lotus petals, smoke, and a distressed red sun. The design points toward mortality "
+            "as a contemplative subject rather than spectacle."
+        ),
+        image="/prints/meditate_on_death_REFERENCE_ONLY.jpg",
+        image_alt="Black T-shirt mockup for Meditate on Death, featuring a skeletal monk, prayer beads, lotus petals, and red sun.",
+        sku="BMB-MEDITATE",
+    ),
+)
+
+PRODUCT_BY_SLUG = {product.slug: product for product in PRODUCTS}
