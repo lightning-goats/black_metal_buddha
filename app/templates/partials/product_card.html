@@ -1,0 +1,11 @@
+<article class="product-card">
+  <a class="product-image-link" href="/products/{{ item.slug }}" aria-label="View {{ item.name }}">
+    <img src="{{ item.image }}" alt="{{ item.image_alt }}" loading="lazy" width="720" height="720">
+  </a>
+  <div class="product-card-body">
+    <p class="product-kicker">{{ item.subtitle }}</p>
+    <h3><a href="/products/{{ item.slug }}">{{ item.name }}</a></h3>
+    <p>{{ item.summary }}</p>
+    <a class="text-link" href="/products/{{ item.slug }}">View design →</a>
+  </div>
+</article>

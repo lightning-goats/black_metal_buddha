@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero shell narrow">
+  <p class="eyebrow">PREVIEW CART</p>
+  <h1>Your selected designs.</h1>
+  <p>This cart is for Phase 0 preview only. Pricing, variants, and checkout activate after sample approval.</p>
+</section>
+<section class="section shell cart-panel" data-cart-panel>
+  <div data-cart-items></div>
+  <div class="cart-empty" data-cart-empty>
+    <p>Your preview cart is empty.</p>
+    <a class="button button-primary" href="/shop">Browse the collection</a>
+  </div>
+  <div class="checkout-disabled" data-cart-checkout hidden>
+    <p><strong>Checkout is not live yet.</strong> Square payments and automated Printful fulfillment arrive in Phase 1.</p>
+    <button class="button button-disabled" type="button" disabled>Checkout coming soon</button>
+  </div>
+</section>
+{% endblock %}
