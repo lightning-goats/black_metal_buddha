@@ -17,7 +17,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/static/site.css">
   <script src="/static/cart.js" defer></script>
-  {% if structured_data %}<script type="application/ld+json">{{ structured_data | safe }}</script>{% endif %}
+  {% if structured_data %}<script type="application/ld+json" nonce="{{ request.state.csp_nonce }}">{{ structured_data | safe }}</script>{% endif %}
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -38,26 +38,11 @@
   <main id="main">{% block content %}{% endblock %}</main>
   <footer class="site-footer">
     <div class="shell footer-grid">
-      <div>
-        <p class="footer-brand">BLACK METAL BUDDHA</p>
-        <p class="muted">Ritual apparel for a fleeting world.</p>
-      </div>
-      <div>
-        <p class="footer-heading">Explore</p>
-        <a href="/shop">Shop</a>
-        <a href="/about">About</a>
-        <a href="/faq">FAQ</a>
-      </div>
-      <div>
-        <p class="footer-heading">Information</p>
-        <a href="/shipping-returns">Shipping & Returns</a>
-        <a href="/privacy">Privacy</a>
-      </div>
+      <div><p class="footer-brand">BLACK METAL BUDDHA</p><p class="muted">Ritual apparel for a fleeting world.</p></div>
+      <div><p class="footer-heading">Explore</p><a href="/shop">Shop</a><a href="/about">About</a><a href="/faq">FAQ</a></div>
+      <div><p class="footer-heading">Information</p><a href="/shipping-returns">Shipping & Returns</a><a href="/privacy">Privacy</a></div>
     </div>
-    <div class="shell footer-bottom">
-      <span>© 2026 Black Metal Buddha.</span>
-      <span>All things pass.</span>
-    </div>
+    <div class="shell footer-bottom"><span>© 2026 Black Metal Buddha.</span><span>All things pass.</span></div>
   </footer>
 </body>
 </html>

@@ -36,3 +36,10 @@ def test_robots_and_sitemap():
     sitemap = client.get("/sitemap.xml")
     assert sitemap.status_code == 200
     assert "/products/meditate-on-death" in sitemap.text
+
+
+def test_security_headers():
+    response = client.get("/")
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert "script-src 'self' 'nonce-" in response.headers["content-security-policy"]
+    assert 'nonce="' in response.text

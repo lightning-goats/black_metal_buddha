@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import secrets
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -33,6 +34,25 @@ app.mount(
 )
 
 templates = Jinja2Templates(directory=ROOT / "app" / "templates")
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    nonce = secrets.token_urlsafe(18)
+    request.state.csp_nonce = nonce
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "img-src 'self' data:; "
+        "style-src 'self'; "
+        f"script-src 'self' 'nonce-{nonce}'; "
+        "base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+    )
+    return response
 
 
 def page_context(request: Request, **kwargs):
