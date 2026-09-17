@@ -2,19 +2,30 @@
 
 ## Mission
 
-Implement Phase 0 and Phase 1 for:
+Implement Black Metal Buddha Phase 0 and Phase 1.
+
+Repository:
+
+```text
+lightning-goats/black_metal_buddha
+```
+
+Domain:
 
 ```text
 blackmetalbuddha.com
 ```
 
-Target:
+## Architecture
 
-- custom self-hosted store
-- existing VPS
-- Square fiat checkout
-- automated Printful fulfillment
-- no Lightning checkout yet
+- self-hosted BMB storefront/order service
+- Square hosted Checkout/Payment Links
+- verified Square webhooks
+- local BMB database
+- automatic Printful fulfillment
+- no LNbits
+- no Strike
+- no Lightning implementation
 
 ## Read first
 
@@ -28,43 +39,36 @@ Target:
 8. `07_TESTING_AND_RELEASE.md`
 9. `10_ADR_LIGHTNING_DEFERRED.md`
 
-## P0 implementation order
-
-1. deploy skeleton
-2. schema/migrations
-3. catalog
-4. cart
-5. checkout shell
-6. Square Sandbox
-7. verified Square webhooks
-8. idempotent order/payment state
-9. Printful integration
-10. signed Printful v2 webhooks
-11. database-backed jobs
-12. reconciliation
-13. tests
-
-## Constraints
-
-- no Bitcoin/Lightning checkout
-- no undocumented Square endpoints
-- no browser-authoritative totals
-- no fulfillment from browser callback
-- no fulfillment without trusted completed payment
-- no duplicate Printful order on retry
-- use Printful external IDs
-- verify both providers' webhooks
-- keep card data out of backend
-- never log secrets
-
 ## First milestone
 
-On staging:
+Staging flow:
 
-1. configure one SKU
-2. add to cart
-3. complete Square Sandbox payment
-4. verified webhook marks it paid
-5. job creates a Printful draft/test-safe order
-6. save Printful ID
-7. prevent any production fulfillment until explicitly enabled by test plan
+```text
+one SKU
+  ↓
+local cart/order
+  ↓
+Square Sandbox payment link
+  ↓
+Square-hosted checkout
+  ↓
+verified payment webhook
+  ↓
+BMB PAID
+  ↓
+Printful draft/test-safe order
+```
+
+No production Printful fulfillment until explicitly enabled by the release plan.
+
+## Rules
+
+- server controls all totals
+- browser return is never proof of payment
+- verify Square webhooks
+- use Square idempotency
+- use Printful `external_id`
+- verify Printful webhooks
+- duplicate events must be harmless
+- no undocumented Square APIs
+- no Lightning code until ADR-001 is reopened

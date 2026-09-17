@@ -1,85 +1,57 @@
-# Security and Privacy Requirements
+# Security and Privacy
 
-## Payment scope
+## Payment handling
 
-Use Square Web Payments SDK.
-
-Never:
-
-- build our own raw-card form
-- log card numbers
-- proxy raw card fields through backend
-- store CVV
-- expose secrets to browser code
+Square hosts checkout. Do not store or proxy raw card information.
 
 ## Webhooks
 
-Verify both providers before trusted state changes.
+### Square
 
-- Square: official Square webhook signature verification
-- Printful: v2 HMAC-SHA256 signed webhook verification
+Verify Square's official webhook signature before processing.
+
+### Printful
+
+Verify the current Printful signed-webhook format before processing.
 
 ## Idempotency
 
-Duplicates must not:
+Database constraints and provider idempotency must prevent:
 
-- charge twice
-- fulfill twice
-- send repeated customer messages
-- corrupt state
-
-Enforce uniqueness at database level as well as in code.
-
-## Sessions/forms
-
-- `Secure`
-- `HttpOnly`
-- appropriate `SameSite`
-- CSRF protection
-- server-side price calculation
-- quantity limits
-
-## CSP
-
-Use restrictive CSP compatible with current Square requirements.
+- duplicate checkout/payment-link operations
+- duplicate payment processing
+- duplicate Printful orders
+- repeated customer notifications
 
 ## PII
 
-Store only operationally necessary customer data:
+Store only what fulfillment requires. Avoid unnecessary customer profiles and do not routinely log full shipping details.
 
-- email
-- name
-- shipping address
-- optional phone only if genuinely required
+## Secrets
 
-Define a retention policy before launch.
+Never expose or commit:
 
-## Logs
+- Square access token
+- Square webhook secret
+- Printful token
+- application secret
+- DB credentials
 
-Never log:
+## Application
 
-- access tokens
-- webhook secrets
-- raw authorization headers
-- payment-source tokens
-
-Avoid routine shipping-address logging.
+- CSRF protection
+- secure cookies
+- rate limiting where useful
+- trusted server-side totals
+- quantity limits
+- restrictive security headers
+- safe error handling
 
 ## Server
 
 - SSH keys
-- minimal firewall exposure
-- unprivileged app
-- non-public database
+- non-root service
+- firewall
+- non-public DB
 - timely security updates
-- encrypted off-host backups
-
-## Policies required before launch
-
-- privacy
-- shipping
-- returns/refunds
-- terms of sale
-- contact method
-
-Policies should accurately disclose Square processing and Printful fulfillment.
+- off-host backups

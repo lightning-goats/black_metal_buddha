@@ -1,79 +1,118 @@
-# Square Integration Plan
+# Square Integration
 
-## Launch scope
+## Decision
 
-Square fiat checkout only.
+Use Square's hosted Checkout / Payment Links API for Phase 1.
 
-Enable individually after merchant testing:
+Do not route Square ecommerce payments through LNbits.
+Do not embed an independent payment processor.
 
-- card
-- Apple Pay
-- Google Pay
-- Cash App Pay
+## Why this pattern
 
-## Browser flow
+The Square hosted-checkout approach gives Black Metal Buddha:
 
-Square Web Payments SDK renders payment UI and creates a secure single-use token.
+- our own storefront/cart/order database
+- Square-hosted payment UI
+- a smaller PCI/security surface
+- Square order and payment identifiers
+- webhook-driven payment completion
+- less client-side checkout code
+- a clean path to Printful automation
 
-Browser sends:
+LNbits' Square provider demonstrated this pattern by calling Square's payment-link API and reconciling the resulting Square order/payment, but BMB will implement the pattern directly.
 
-- local order ID
-- Square token
-- buyer verification data where required
+## Checkout creation
 
-Browser does not send authoritative prices/totals.
+Server flow:
 
-## Server flow
-
-1. Load order.
+1. Load local BMB order.
 2. Require `PENDING_PAYMENT`.
-3. Recalculate trusted total.
-4. Get stable payment-attempt idempotency key.
-5. Call Square `CreatePayment`.
-6. Store Square payment ID.
-7. Return safe result to browser.
-8. Wait for trusted completed payment state before fulfillment.
+3. Recalculate totals from trusted data.
+4. Build Square order/line items.
+5. Include a BMB order reference in Square metadata/reference fields.
+6. Use a stable idempotency key.
+7. Call Square CreatePaymentLink.
+8. Store Square payment-link ID, Square order ID, and returned checkout URL.
+9. Redirect browser to Square.
 
-## Webhooks
+Conceptual request:
 
-At minimum subscribe to:
+```json
+{
+  "idempotency_key": "stable-attempt-key",
+  "order": {
+    "location_id": "LOCATION",
+    "reference_id": "BMB-000041",
+    "line_items": []
+  },
+  "checkout_options": {
+    "redirect_url": "https://blackmetalbuddha.com/order/BMB-000041/return"
+  }
+}
+```
 
-- `payment.created`
-- `payment.updated`
+Exact fields must be verified against the current Square API version during implementation.
 
-Handler:
+## Shipping-address strategy
 
-1. preserve raw body
-2. verify Square signature using official mechanism
-3. reject invalid signature
-4. deduplicate event ID
-5. retrieve/reconcile Payment if needed
-6. match local order
-7. verify amount/currency/location/status
-8. atomically transition payment state
-9. enqueue fulfillment exactly once on `COMPLETED`
-10. respond promptly
+Two valid approaches exist.
 
-## Browser security
+### Preferred initial approach
 
-Square requires secure contexts and an appropriate CSP for Web Payments SDK. Keep CSP restrictive and add only documented Square origins.
+Have Square hosted checkout collect the shipping address if current Checkout API capabilities meet our needs.
 
-## Refunds
+Benefits:
 
-Implement an owner/admin refund path before launch.
+- less PII handled by BMB before payment
+- simpler initial checkout form
 
-Payment refund and Printful cancellation are separate operations; refunding Square does not imply Printful production can still be stopped.
+### Alternative
+
+Collect/validate shipping in BMB first, then create the Square payment link.
+
+Use this if Printful shipping-price calculation requires the address before the Square total can be finalized.
+
+The final choice depends on the shipping-rate strategy.
+
+## Payment confirmation
+
+Browser redirects are not proof of payment.
+
+Subscribe to relevant Square payment webhooks, including payment-state changes such as `payment.updated` where appropriate.
+
+Webhook handler:
+
+1. read raw body
+2. verify Square signature
+3. deduplicate provider event
+4. identify Square order/payment
+5. retrieve authoritative Square payment if needed
+6. map to BMB order
+7. verify expected currency
+8. verify expected amount
+9. require `COMPLETED`
+10. atomically mark BMB payment `PAID`
+11. enqueue Printful fulfillment exactly once
+12. return success promptly
 
 ## Reconciliation
 
-Run at least daily:
+Run recurring reconciliation for:
 
-- stale `PENDING_PAYMENT`
-- local `PAID` missing fulfillment
+- payment links with stale pending orders
 - Square completed payments not reflected locally
+- local paid orders missing fulfillment jobs
 
-Do not rely exclusively on webhook delivery.
+Webhooks are primary, not exclusive.
+
+## Refunds
+
+Implement an admin refund workflow before public launch.
+
+Square refund and Printful cancellation are separate operations.
 
 ## Lightning
 
-Out of scope until Square publishes supported developer access.
+No Lightning functionality should be implemented in BMB or LNbits for this project at this stage.
+
+See `10_ADR_LIGHTNING_DEFERRED.md`.

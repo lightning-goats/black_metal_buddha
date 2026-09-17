@@ -1,37 +1,37 @@
-# Technical Sources Checked
+# Sources
 
-Research date: **2026-09-17**
-
-Recheck during implementation because APIs evolve.
+Recheck before implementation because APIs change.
 
 ## Square
 
-- https://developer.squareup.com/reference/sdks/web/payments
-- https://developer.squareup.com/docs/web-payments/overview
-- https://developer.squareup.com/docs/web-payments/quickstart
-- https://developer.squareup.com/docs/payments-refunds
-- https://developer.squareup.com/reference/square/payments/create-payment
-- https://developer.squareup.com/docs/webhooks/overview
-- https://developer.squareup.com/docs/payments-api/webhooks
-- https://developer.squareup.com/reference/square
+- Square API reference  
+  https://developer.squareup.com/reference/square
+
+- Checkout / Payment Links  
+  https://developer.squareup.com/reference/square/checkout/create-payment-link
+
+- Webhooks  
+  https://developer.squareup.com/docs/webhooks/overview
+
+- Payments webhooks  
+  https://developer.squareup.com/docs/payments-api/webhooks
 
 ## Printful
 
-- https://developers.printful.com/docs/
-- https://developers.printful.com/docs/v2-preview/
-- https://www.printful.com/integrations/etsy
-- https://www.printful.com/integrations/amazon
-- https://www.printful.com/integrations/ebay
+- Printful API  
+  https://developers.printful.com/docs/
 
-## Verified planning facts
+- Printful v2 preview / signed webhooks  
+  https://developers.printful.com/docs/v2-preview/
 
-At the research date:
+## LNbits reference implementation studied
 
-- Square Web Payments SDK supports card, ACH, Apple Pay, Google Pay, gift card, Afterpay/Clearpay, and Cash App Pay.
-- Square requires a secure context and appropriate CSP for Web Payments SDK.
-- Payments API exposes payment-created/updated webhooks.
-- Printful Orders API supports unique `external_id` and lookup by `@external_id`.
-- Printful can create and confirm orders for fulfillment.
-- Printful orders can fail/hold/return to draft and need reconciliation.
-- Printful v2 webhooks support HMAC-SHA256 event signing.
-- Printful directly integrates with Etsy, Amazon, and eBay.
+- `lnbits/fiat/square.py`
+- `lnbits/core/views/callback_api.py`
+- `lnbits/core/services/fiat_providers.py`
+
+Repository:
+
+https://github.com/lnbits/lnbits
+
+LNbits is a reference for useful Square integration patterns only. It is not a dependency in the BMB architecture.

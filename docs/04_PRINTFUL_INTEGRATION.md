@@ -1,89 +1,98 @@
-# Printful Integration Plan
+# Printful Integration
+
+## Objective
+
+Once BMB has a verified paid order, Printful fulfillment must happen automatically.
+
+Customer payment method is irrelevant to Printful. Printful receives a paid BMB order and fulfills it using the merchant's configured Printful billing source.
 
 ## Authentication
 
-Use a Printful **Private Token** for our own store. Keep it server-side and scope it as narrowly as practical.
+Use a private Printful token for the BMB store. Keep it server-side.
 
 ## Catalog
 
-Use preconfigured Printful products/variants.
+For each BMB SKU store a stable Printful mapping.
 
-For every sellable BMB SKU verify:
+Verify before launch:
 
-- exact garment
-- color
-- size
-- print placement
-- print file
-- current availability
-- Printful variant mapping
+- product active
+- exact blank
+- exact size
+- exact black color
+- artwork
+- placement
+- cost
+- shipping behavior
 
-## Fulfillment
-
-1. BMB order becomes `PAID`.
-2. Enqueue `SUBMIT_PRINTFUL_ORDER`.
-3. Check for existing Printful order using BMB `external_id`.
-4. If none exists, create order.
-5. Confirm for fulfillment.
-6. Store Printful ID and status.
-7. Signed webhooks update state.
-
-For initial production, create then explicitly confirm for easier auditability. Later a create-with-confirm path is acceptable.
-
-## External ID
-
-Use BMB order number:
+## Submission flow
 
 ```text
-BMB-000041
+BMB order = PAID
+      ↓
+SUBMIT_PRINTFUL_ORDER job
+      ↓
+lookup Printful @external_id
+      ↓
+already exists?
+  ├─ yes -> reconcile
+  └─ no  -> create order
+      ↓
+confirm order
+      ↓
+store Printful order ID/status
 ```
 
-Printful supports unique external IDs and retrieval by:
+Use:
 
 ```text
-GET /orders/@BMB-000041
+Printful external_id = BMB order number
 ```
-
-## Holds/failures
-
-Printful orders can enter review/hold/failure states or return to draft.
-
-Never assume API acceptance means production has started.
 
 ## Webhooks
 
-Use **Printful Webhook v2** and verify its HMAC-SHA256 event signature.
+Use signed Printful webhooks according to the current API version. Verify signatures before state changes.
 
-Validate:
+Track relevant:
 
-- `x-pf-webhook-public-key`
-- `x-pf-webhook-signature`
-
-Subscribe to relevant order/hold/shipment/return events after checking the exact current v2 names during implementation.
+- order state
+- hold/review
+- failure
+- shipment
+- tracking
+- return
 
 ## Shipping
 
-Choose and document one deterministic launch strategy before payment capture:
+The checkout total must be deterministic before Square is charged.
 
-- BMB flat-rate rules, or
-- server-side Printful rate/cost estimation
+Choose one:
 
-## Billing
+1. flat shipping rules maintained by BMB
+2. server-side Printful rate estimation before Square payment-link creation
 
-Printful charges our configured billing source when an order is submitted.
+If real-time Printful shipping rates require customer address before checkout creation, collect shipping in BMB before sending the buyer to Square.
 
-Monitor:
+## Printful billing
 
-- billing-source validity
-- failed charges
-- paid customer orders blocked from fulfillment
+A customer can successfully pay Square while Printful billing later fails.
+
+Therefore alert on:
+
+```text
+BMB PAID
++
+Printful billing/order submission failure
+```
+
+This is a high-priority operational state.
 
 ## Reconciliation
 
-Regularly find:
+Find:
 
-- `PAID` without Printful order
-- Printful `failed`
-- Printful hold/draft regressions
-- Printful shipped but local not shipped
+- paid BMB orders with no Printful order
+- Printful failed orders
+- Printful holds
+- shipped Printful orders not updated locally
 - missing tracking
