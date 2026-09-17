@@ -1,0 +1,89 @@
+BLACK METAL BUDDHIST — PRINTER HANDOFF
+Prepared September 17, 2026
+
+STATUS: READY TO SEND FOR PRINTER REVIEW AND A SAMPLE, NOT PRESS-APPROVED
+
+The source images were generated shirt mockups, not flat high-resolution
+production masters. The artwork has been isolated from those mockups. This
+package preserves the existing composition and lettering; it does not claim
+a full-resolution redraw. Do not print the shirt photographs themselves.
+
+START WITH THESE FILES
+01_transparent_png/
+  The closest version to the mockups: continuous-tone artwork, with the shirt,
+  surrounding backdrop and dark garment field removed. Transparent RGBA PNG,
+  embedded sRGB profile, 3600 x 4800 pixels, nominal 300 pixels/inch.
+  Send these for digital-print review when retaining the original tonal
+  variation is the priority. No solid black or white rectangular background.
+
+ALTERNATIVE FOR A TWO-INK LOOK
+02_two_ink_vector/
+  Genuine cubic-Bezier SVG paths, separated into two named color groups:
+  ink-bone (#dfd7cb) and ink-red (#be3e37). Black is garment/negative space.
+  These are simplified automatic traces, NOT hand-redrawn native masters.
+  Some gray shading and tiny distressed marks differ from the PNG extractions.
+  All lettering is outlined; no font files or external artwork are required.
+  RGB color groups are NOT certified Pantone colors or final press separations.
+
+03_two_ink_png/
+  Transparent 3600 x 4800 PNG renderings of the two-ink SVGs, also sRGB and
+  nominal 300 pixels/inch. Use only when the two-ink appearance is preferred.
+  These are alternatives, not additional layers to print over the first PNGs.
+
+04_previews/
+  Black-background visual proofs of both versions. The collection preview
+  shows the continuous-tone versions. FOR REFERENCE ONLY; not print files.
+
+05_original_mockups/
+  Original approved shirt concepts, saved as reference JPGs.
+  FOR REFERENCE ONLY; do not print the entire shirt photograph.
+
+CANVAS, SIZE AND GARMENT
+All production canvases are 12 x 16 inches (30.48 x 40.64 cm).
+The artwork is proportionally fitted and centered, with approximately
+0.25 inches of transparent margin above and below. Use a BLACK garment.
+The black-looking interior details and distress holes are transparent.
+Do not substitute a white or pale garment without adapting the art.
+
+  Lotus of the Void: approx. 10.45 x 15.50 inches of artwork.
+    Extracted source: 664 x 985 pixels.
+    Original raster detail at supplied size: approx. 64 ppi.
+  Dharma of Decay: approx. 11.17 x 15.50 inches of artwork.
+    Extracted source: 702 x 974 pixels.
+    Original raster detail at supplied size: approx. 63 ppi.
+  Meditate on Death: approx. 11.03 x 15.50 inches of artwork.
+    Extracted source: 681 x 957 pixels.
+    Original raster detail at supplied size: approx. 62 ppi.
+
+The printer must confirm the allowed print area for the actual shirt model,
+size and process. Scale proportionally; do not stretch to fill the canvas.
+Placement on the garment is not baked in: agree on chest placement before
+printing. A preview may trim transparent padding automatically, so confirm
+the actual artwork dimensions rather than relying only on upload settings.
+
+IMPORTANT RESOLUTION DISCLOSURE
+The original mockups are 1254 x 1254 pixels, but the design occupies only
+part of each image. The continuous-tone PNGs are enlarged from the extracted
+artwork; setting a 300-ppi export does NOT create native 300-ppi detail.
+Vector tracing gives scalable edges, but also does not recover lost detail.
+These files are useful for printer assessment and a physical sample. They
+should not be treated as automatically approved for a large production run.
+
+REQUIRED BEFORE A RUN
+Inspect all lettering, thin ornamental strokes, small gaps and grain at the
+actual output size. Compare both file variants with their matching previews.
+The many small distressed marks are intentional, but the shop may need to
+simplify tiny islands, enlarge minimum lines/gaps, or adjust the artwork for
+its equipment. Obtain approval before making material visual changes.
+The printer must determine underbase, color matching, trapping/choke, ink
+sequence, mesh/halftone settings and final separations as applicable. The
+files do not contain a pre-engineered underbase or registration marks.
+Some edge pixels in the raster PNGs are anti-aliased. Review how the chosen
+process handles them on black fabric. Request one physical sample and approve
+its fine detail, color, hand-feel and placement before ordering a larger run.
+
+REFERENCE
+Printful, "How to prepare perfect print files for print-on-demand"
+(updated July 28, 2025; consulted September 17, 2026) discusses PNG/sRGB,
+product-specific print areas, source resolution and dark-shirt transparency.
+The shop's specifications for the selected product take precedence.

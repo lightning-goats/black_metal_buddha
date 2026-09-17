@@ -1,0 +1,118 @@
+{
+  "collection": "Black Metal Buddhist",
+  "prepared_date": "2026-09-17",
+  "status": "Printer-review and sample-print handoff; not press-approved",
+  "intended_garment": "Black",
+  "canvas_pixels": [
+    3600,
+    4800
+  ],
+  "canvas_inches": [
+    12,
+    16
+  ],
+  "nominal_export_ppi": 300,
+  "color_profile": "sRGB",
+  "source_detail_warning": "Raster PNGs are enlarged mockup extractions, not native 300-ppi original artwork. Traced vectors smooth existing shapes but do not restore missing detail.",
+  "designs": [
+    {
+      "slug": "lotus_of_the_void",
+      "title": "Lotus of the Void",
+      "tagline": "NO SELF • NO FEAR",
+      "source_image_pixels": [
+        1254,
+        1254
+      ],
+      "extracted_artwork_pixels": [
+        664,
+        985
+      ],
+      "placed_artwork_pixels": [
+        3135,
+        4650
+      ],
+      "placed_artwork_inches": [
+        10.45,
+        15.5
+      ],
+      "offset_inches": [
+        0.773,
+        0.25
+      ],
+      "effective_original_raster_ppi_at_placed_size": 63.5,
+      "raster_png": "01_transparent_png/lotus_of_the_void_12x16_300dpi.png",
+      "two_ink_svg": "02_two_ink_vector/lotus_of_the_void_two_ink.svg",
+      "two_ink_png": "03_two_ink_png/lotus_of_the_void_two_ink_12x16_300dpi.png",
+      "vector_contour_count": {
+        "bone": 3774,
+        "red": 615
+      }
+    },
+    {
+      "slug": "dharma_of_decay",
+      "title": "Dharma of Decay",
+      "tagline": "ALL THINGS PASS",
+      "source_image_pixels": [
+        1254,
+        1254
+      ],
+      "extracted_artwork_pixels": [
+        702,
+        974
+      ],
+      "placed_artwork_pixels": [
+        3351,
+        4650
+      ],
+      "placed_artwork_inches": [
+        11.17,
+        15.5
+      ],
+      "offset_inches": [
+        0.413,
+        0.25
+      ],
+      "effective_original_raster_ppi_at_placed_size": 62.8,
+      "raster_png": "01_transparent_png/dharma_of_decay_12x16_300dpi.png",
+      "two_ink_svg": "02_two_ink_vector/dharma_of_decay_two_ink.svg",
+      "two_ink_png": "03_two_ink_png/dharma_of_decay_two_ink_12x16_300dpi.png",
+      "vector_contour_count": {
+        "bone": 4266,
+        "red": 501
+      }
+    },
+    {
+      "slug": "meditate_on_death",
+      "title": "Meditate on Death",
+      "tagline": "EMPTINESS IS FREEDOM",
+      "source_image_pixels": [
+        1254,
+        1254
+      ],
+      "extracted_artwork_pixels": [
+        681,
+        957
+      ],
+      "placed_artwork_pixels": [
+        3309,
+        4650
+      ],
+      "placed_artwork_inches": [
+        11.03,
+        15.5
+      ],
+      "offset_inches": [
+        0.483,
+        0.25
+      ],
+      "effective_original_raster_ppi_at_placed_size": 61.7,
+      "raster_png": "01_transparent_png/meditate_on_death_12x16_300dpi.png",
+      "two_ink_svg": "02_two_ink_vector/meditate_on_death_two_ink.svg",
+      "two_ink_png": "03_two_ink_png/meditate_on_death_two_ink_12x16_300dpi.png",
+      "vector_contour_count": {
+        "bone": 3650,
+        "red": 945
+      }
+    }
+  ]
+}
