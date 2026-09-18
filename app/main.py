@@ -94,6 +94,7 @@ def page_context(request: Request, **kwargs):
         "default_description": DEFAULT_DESCRIPTION,
         "products": PRODUCTS,
         "phase1_enabled": phase1_settings.phase1_api_enabled,
+        "support_email": phase1_settings.support_email,
         **kwargs,
     }
 
