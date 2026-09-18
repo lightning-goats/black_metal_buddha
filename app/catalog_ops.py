@@ -147,6 +147,11 @@ def import_catalog_manifest(
             session.add(item)
 
     if apply:
+        session.flush()
+        errors = catalog_errors(session)
+        if errors:
+            session.rollback()
+            raise ValueError("Imported catalog is invalid: " + "; ".join(errors))
         session.commit()
     else:
         session.rollback()
