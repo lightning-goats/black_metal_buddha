@@ -29,6 +29,12 @@ class Settings:
     printful_webhook_secret_key: str | None
     printful_webhook_public_key: str | None
     phase0_5_approved: bool
+    email_mode: str
+    smtp_host: str | None
+    smtp_port: int
+    smtp_username: str | None
+    smtp_password: str | None
+    email_from: str | None
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -49,6 +55,12 @@ class Settings:
             printful_webhook_secret_key=os.getenv("PRINTFUL_WEBHOOK_SECRET_KEY"),
             printful_webhook_public_key=os.getenv("PRINTFUL_WEBHOOK_PUBLIC_KEY"),
             phase0_5_approved=_bool("PHASE0_5_APPROVED", False),
+            email_mode=os.getenv("EMAIL_MODE", "disabled").lower(),
+            smtp_host=os.getenv("SMTP_HOST"),
+            smtp_port=int(os.getenv("SMTP_PORT", "587")),
+            smtp_username=os.getenv("SMTP_USERNAME"),
+            smtp_password=os.getenv("SMTP_PASSWORD"),
+            email_from=os.getenv("EMAIL_FROM"),
         )
 
     @property
@@ -60,6 +72,10 @@ class Settings:
     def validate_safety(self) -> None:
         if self.printful_mode not in {"disabled", "draft", "production"}:
             raise ValueError("PRINTFUL_MODE must be disabled, draft, or production")
+        if self.email_mode not in {"disabled", "console", "smtp"}:
+            raise ValueError("EMAIL_MODE must be disabled, console, or smtp")
+        if self.email_mode == "smtp" and (not self.smtp_host or not self.email_from):
+            raise ValueError("SMTP_HOST and EMAIL_FROM are required when EMAIL_MODE=smtp")
         if self.printful_mode == "production" and not self.phase0_5_approved:
             raise ValueError("Production Printful fulfillment requires PHASE0_5_APPROVED=true")
         if self.app_env == "production" and self.phase1_api_enabled:
