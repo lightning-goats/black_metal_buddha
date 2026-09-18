@@ -48,8 +48,12 @@ class Order(Base):
     subtotal_cents: Mapped[int] = mapped_column(Integer)
     discount_cents: Mapped[int] = mapped_column(Integer, default=0)
     shipping_cents: Mapped[int] = mapped_column(Integer, default=0)
+    shipping_method: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    shipping_quoted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     tax_cents: Mapped[int] = mapped_column(Integer, default=0)
     total_cents: Mapped[int] = mapped_column(Integer)
+    refunded_cents: Mapped[int] = mapped_column(Integer, default=0)
+    refund_state: Mapped[str] = mapped_column(String(32), default="NONE")
     payment_state: Mapped[str] = mapped_column(String(32), default="PENDING")
     fulfillment_state: Mapped[str] = mapped_column(String(32), default="NOT_STARTED")
     order_state: Mapped[str] = mapped_column(String(32), default="PENDING_PAYMENT")
@@ -82,6 +86,20 @@ class OrderItem(Base):
     printful_product_id_snapshot: Mapped[str | None] = mapped_column(String(128), nullable=True)
     printful_variant_id_snapshot: Mapped[str | None] = mapped_column(String(128), nullable=True)
     order: Mapped[Order] = relationship(back_populates="items")
+
+
+class Refund(Base):
+    __tablename__ = "refunds"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[str] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), index=True)
+    square_refund_id: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    amount_cents: Mapped[int] = mapped_column(Integer)
+    currency: Mapped[str] = mapped_column(String(3))
+    status: Mapped[str] = mapped_column(String(32))
+    reason: Mapped[str | None] = mapped_column(String(192), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
 
 
 class PaymentEvent(Base):
