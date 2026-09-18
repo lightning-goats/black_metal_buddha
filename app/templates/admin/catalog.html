@@ -1,0 +1,43 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<section class="admin-page-head"><div><p class="eyebrow">CATALOG</p><h1>Variants</h1></div></section>
+
+<section class="admin-panel">
+  <h2>Create variant</h2>
+  <form class="admin-form-grid" method="post" action="/admin/catalog/new">
+    <input type="hidden" name="csrf" value="{{ token_new }}">
+    <label>Product
+      <select name="product_slug" required>{% for slug, product in products.items() %}<option value="{{ slug }}">{{ product.name }}</option>{% endfor %}</select>
+    </label>
+    <label>SKU <input name="sku" required maxlength="128"></label>
+    <label>Size <input name="size" required maxlength="32"></label>
+    <label>Color <input name="color" value="Black" required maxlength="64"></label>
+    <label>Retail price USD <input name="price" inputmode="decimal" value="0.00" required></label>
+    <label>Printful product ID <input name="printful_product_id"></label>
+    <label>Printful variant ID <input name="printful_variant_id"></label>
+    <label class="check-label"><input type="checkbox" name="active"> Active</label>
+    <label class="check-label"><input type="checkbox" name="sellable"> Sellable</label>
+    <button class="button button-primary" type="submit">Create variant</button>
+  </form>
+</section>
+
+<section class="admin-panel">
+  <h2>Existing variants</h2>
+  {% if variants %}
+    {% for variant in variants %}
+    <form class="variant-editor" method="post" action="/admin/catalog/{{ variant.id }}">
+      <input type="hidden" name="csrf" value="{{ token_edit[variant.id] }}">
+      <div><strong>{{ variant.sku }}</strong><span>{{ products[variant.product_slug].name }}</span></div>
+      <label>Size <input name="size" value="{{ variant.size }}" required></label>
+      <label>Color <input name="color" value="{{ variant.color }}" required></label>
+      <label>Price USD <input name="price" value="{{ '%.2f' | format((variant.retail_price_cents or 0) / 100) }}" required></label>
+      <label>Printful product <input name="printful_product_id" value="{{ variant.printful_product_id or '' }}"></label>
+      <label>Printful variant <input name="printful_variant_id" value="{{ variant.printful_variant_id or '' }}"></label>
+      <label class="check-label"><input type="checkbox" name="active" {% if variant.active %}checked{% endif %}> Active</label>
+      <label class="check-label"><input type="checkbox" name="sellable" {% if variant.sellable %}checked{% endif %}> Sellable</label>
+      <button class="button button-ghost" type="submit">Save</button>
+    </form>
+    {% endfor %}
+  {% else %}<p class="muted">No variants configured.</p>{% endif %}
+</section>
+{% endblock %}

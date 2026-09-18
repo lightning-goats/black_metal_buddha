@@ -103,6 +103,16 @@ class PrintfulClient:
             )
         return rates
 
+    def cancel_order(self, order_id_or_external_id: str) -> dict[str, Any]:
+        # Printful currently documents cancellation through the v1 DELETE
+        # endpoint for pending/draft orders, including charged-order refunds.
+        response = self.client.delete(
+            f"https://api.printful.com/orders/{order_id_or_external_id}",
+            headers=self._headers(),
+        )
+        response.raise_for_status()
+        return response.json().get("result") or {}
+
     def confirm_order(self, order_id_or_external_id: str) -> dict[str, Any]:
         if self.config.printful_mode != "production":
             raise PrintfulConfigurationError("Printful confirmation requires production mode")

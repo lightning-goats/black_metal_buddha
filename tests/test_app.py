@@ -74,3 +74,8 @@ def test_robots_blocks_transactional_utility_paths():
     assert "Disallow: /orders/" in response.text
     assert "Disallow: /admin" in response.text
     assert "Disallow: /api/" in response.text
+
+
+def test_admin_is_hidden_when_not_configured():
+    response = client.get("/admin")
+    assert response.status_code == 404

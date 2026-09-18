@@ -1,0 +1,33 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<section class="admin-page-head">
+  <div><p class="eyebrow">COMMERCE</p><h1>Orders</h1></div>
+</section>
+<form class="admin-filters" method="get" action="/admin/orders">
+  <label>Order number <input name="q" value="{{ search }}" placeholder="BMB-…"></label>
+  <label>State
+    <select name="state"><option value="">All</option>
+      {% for state in states %}<option value="{{ state }}" {% if state == selected_state %}selected{% endif %}>{{ state }}</option>{% endfor %}
+    </select>
+  </label>
+  <button class="button button-ghost" type="submit">Filter</button>
+</form>
+<section class="admin-panel">
+  {% if orders %}
+  <div class="admin-table-wrap"><table class="admin-table">
+    <thead><tr><th>Order</th><th>Created</th><th>State</th><th>Payment</th><th>Fulfillment</th><th>Refund</th><th>Total</th></tr></thead>
+    <tbody>{% for order in orders %}
+      <tr>
+        <td><a href="/admin/orders/{{ order.order_number }}">{{ order.order_number }}</a></td>
+        <td>{{ order.created_at }}</td>
+        <td>{{ order.order_state }}</td>
+        <td>{{ order.payment_state }}</td>
+        <td>{{ order.fulfillment_state }}</td>
+        <td>{{ order.refund_state }}</td>
+        <td>{{ order.currency }} {{ '%.2f' | format(order.total_cents / 100) }}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="muted">No matching orders.</p>{% endif %}
+</section>
+{% endblock %}
