@@ -280,7 +280,7 @@ def test_refund_service_records_completed_refund_and_email_job(session):
     assert refund.square_refund_id == "REF1"
     assert order.refunded_cents == 1000
     assert order.refund_state == "PARTIAL"
-    jobs = session.scalars(select(Job).where(Job.job_type == "SEND_REFUND_CONFIRMATION")).all()
+    jobs = session.scalars(select(Job).where(Job.job_type.like("SEND_REFUND_CONFIRMATION:%"))).all()
     assert len(jobs) == 1
 
 
