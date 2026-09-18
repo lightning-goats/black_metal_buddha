@@ -27,6 +27,7 @@ from .payments.square import SquareClient, verify_square_webhook
 from .refunds import apply_refund_status, get_refund_by_square_id
 from .schemas import CreateOrderIn, OrderOut, SelectShippingIn, ShippingRateOut
 from .settings import settings
+from .shipments import upsert_printful_shipment
 
 router = APIRouter(prefix="/api/v1", tags=["phase1"])
 
@@ -302,7 +303,13 @@ async def printful_webhook(request: Request, session: Session = Depends(db_sessi
 
         if event_type in {"order_created", "order_updated"}:
             order.fulfillment_state = pf_status or "DRAFT"
-            if order.order_state == "PAID":
+            if pf_status == "FULFILLED":
+                order.order_state = "SHIPPED"
+            elif pf_status == "PARTIAL":
+                order.order_state = "PARTIALLY_SHIPPED"
+            elif pf_status == "INPROCESS":
+                order.order_state = "IN_PRODUCTION"
+            elif order.order_state == "PAID":
                 order.order_state = "FULFILLMENT_SUBMITTED"
             result = order.fulfillment_state
         elif event_type == "order_put_hold":
@@ -316,15 +323,17 @@ async def printful_webhook(request: Request, session: Session = Depends(db_sessi
         elif event_type == "order_canceled":
             order.fulfillment_state = "CANCELED"
             result = "CANCELED"
-        elif event_type == "shipment_sent":
-            order.fulfillment_state = "SHIPPED"
-            order.order_state = "SHIPPED"
-            order.shipped_at = datetime.now(timezone.utc)
-            enqueue_job(session, order, "SEND_SHIPPING_NOTIFICATION")
-            result = "SHIPPED"
-        elif event_type == "shipment_delivered":
-            order.fulfillment_state = "DELIVERED"
-            result = "DELIVERED"
+        elif event_type in {"shipment_sent", "shipment_delivered", "shipment_returned"}:
+            shipment = upsert_printful_shipment(
+                session,
+                order,
+                data.get("shipment") or {},
+                event_type=event_type,
+                printful_order_status=pf_order.get("status"),
+            )
+            if shipment is not None and event_type == "shipment_sent":
+                order.shipped_at = order.shipped_at or shipment.shipped_at or datetime.now(timezone.utc)
+            result = shipment.status if shipment is not None else "SHIPMENT_MISSING"
 
     session.add(
         FulfillmentEvent(

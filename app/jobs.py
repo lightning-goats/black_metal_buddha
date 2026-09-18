@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .fulfillment.printful import PrintfulClient
-from .models import Job, Order
+from .models import Job, Order, Shipment
 from .notifications.email import EmailSender
 from .settings import Settings, settings
 
@@ -87,8 +87,12 @@ def process_email_job(
     try:
         if job.job_type == "SEND_ORDER_CONFIRMATION":
             mailer.send_order_confirmation(order)
-        elif job.job_type == "SEND_SHIPPING_NOTIFICATION":
-            mailer.send_shipping_notification(order)
+        elif job.job_type.startswith("SEND_SHIPPING_NOTIFICATION:"):
+            shipment_id = int(job.job_type.split(":", 1)[1])
+            shipment = session.get(Shipment, shipment_id)
+            if shipment is None or shipment.order_id != order.id:
+                raise RuntimeError("Shipment email job references an invalid shipment")
+            mailer.send_shipping_notification(order, shipment)
         elif job.job_type.startswith("SEND_REFUND_CONFIRMATION"):
             mailer.send_refund_confirmation(order)
         else:

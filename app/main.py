@@ -250,9 +250,15 @@ def order_status(request: Request, order_number: str):
         elif order.order_state in {"FULFILLMENT_SUBMITTED", "IN_PRODUCTION"}:
             heading = "Your order is being prepared."
             message = "Payment is confirmed and fulfillment is in progress."
+        elif order.order_state == "PARTIALLY_SHIPPED":
+            heading = "Part of your order has shipped."
+            message = "One or more shipments are on the way. Remaining items will follow."
         elif order.order_state == "SHIPPED":
             heading = "Your order has shipped."
-            message = "Shipment information will be added as the fulfillment integration is completed."
+            message = "All items have been shipped. Tracking details appear below when available."
+        elif order.fulfillment_state == "RETURNED":
+            heading = "A shipment was returned."
+            message = "This shipment needs attention. Please contact us so we can resolve it."
         elif order.order_state == "PAYMENT_FAILED":
             heading = "Payment was not completed."
             message = "No fulfillment will occur for this order."

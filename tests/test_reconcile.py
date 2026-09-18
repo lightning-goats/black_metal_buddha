@@ -94,6 +94,9 @@ class PrintfulDraft:
     def get_order_by_external_id(self, external_id):
         return {"id": 777, "external_id": external_id, "status": "draft"}
 
+    def get_shipments(self, order_id):
+        return []
+
 
 def test_square_reconciliation_repairs_missed_webhook(session):
     order = create_test_order(session)
