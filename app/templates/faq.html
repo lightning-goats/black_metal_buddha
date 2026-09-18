@@ -2,12 +2,17 @@
 {% block content %}
 <section class="page-hero shell narrow">
   <p class="eyebrow">FAQ</p>
-  <h1>Questions before the first drop.</h1>
+  <h1>Questions from the void.</h1>
 </section>
 <section class="section shell faq-list">
-  <details open><summary>Can I buy the shirts yet?</summary><p>Not yet. The storefront is in Phase 0 while physical samples are being approved. Checkout will open only after production and fulfillment are validated.</p></details>
-  <details><summary>Who will print and ship the shirts?</summary><p>The current plan is automated print-on-demand fulfillment through Printful. Exact product details will be published before sales open.</p></details>
-  <details><summary>How will payments work?</summary><p>Phase 1 will use Square for fiat checkout. Lightning payments are intentionally deferred until Square offers an official API path that can settle Lightning payments automatically to fiat for this ecommerce flow.</p></details>
+  <details open><summary>Can I buy the shirts yet?</summary>
+    {% if phase1_enabled %}<p>Yes. Choose a sellable size on a product page, enter your shipping address, select an available Printful shipping method, and complete payment on Square.</p>
+    {% else %}<p>Not yet. The storefront remains in preview mode while physical samples and final launch gates are being approved.</p>{% endif %}
+  </details>
+  <details><summary>Who prints and ships the shirts?</summary><p>Printful handles automated print-on-demand production and shipment after Black Metal Buddha verifies a completed Square payment.</p></details>
+  <details><summary>How are payments handled?</summary><p>Card and other enabled fiat checkout methods are processed on Square's hosted checkout. Black Metal Buddha does not handle raw card details.</p></details>
+  <details><summary>What about Bitcoin and Lightning?</summary><p>Lightning remains intentionally deferred until Square exposes an official online API flow that can accept Lightning and automatically settle the merchant side to fiat without manual conversion.</p></details>
+  <details><summary>Can I return a shirt because I ordered the wrong size?</summary><p>These are made-to-order products, so size/color mistakes and change-of-mind returns generally are not accepted. Damaged, defective, misprinted, incorrect, or qualifying lost orders are handled under our Shipping & Returns policy.</p></details>
   <details><summary>Are the designs connected to a Buddhist organization?</summary><p>No. Black Metal Buddha is an independent art and apparel project and does not represent a Buddhist lineage, temple, teacher, or institution.</p></details>
 </section>
 {% endblock %}
