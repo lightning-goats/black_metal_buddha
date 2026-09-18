@@ -11,14 +11,25 @@ def test_health():
     assert response.text == "ok"
 
 
-def test_home_has_seo_and_products():
+def test_home_has_seo_products_and_branding():
     response = client.get("/")
     assert response.status_code == 200
     assert "<title>Black Metal Buddha" in response.text
     assert 'rel="canonical"' in response.text
+    assert "/static/brand/black-metal-buddha-logo.webp" in response.text
+    assert '"@type": "Organization"' in response.text
+    assert '"@type": "WebSite"' in response.text
+    assert '"logo": "https://blackmetalbuddha.com/static/brand/black-metal-buddha-logo.webp"' in response.text
     assert "Lotus of the Void" in response.text
     assert "Dharma of Decay" in response.text
     assert "Meditate on Death" in response.text
+
+
+def test_logo_asset_is_served():
+    response = client.get("/static/brand/black-metal-buddha-logo.webp")
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("image/webp")
+    assert len(response.content) > 1000
 
 
 def test_product_schema():
@@ -27,6 +38,13 @@ def test_product_schema():
     assert 'application/ld+json' in response.text
     assert '"@type": "Product"' in response.text
     assert "Checkout is intentionally disabled" in response.text
+
+
+def test_branded_404_is_noindex():
+    response = client.get("/products/does-not-exist")
+    assert response.status_code == 404
+    assert "Nothing remains here." in response.text
+    assert 'content="noindex,nofollow"' in response.text
 
 
 def test_robots_and_sitemap():

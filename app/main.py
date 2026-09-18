@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .catalog import PRODUCT_BY_SLUG, PRODUCTS
 
@@ -68,6 +69,24 @@ def page_context(request: Request, **kwargs):
     }
 
 
+@app.exception_handler(StarletteHTTPException)
+async def http_error_page(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404:
+        return templates.TemplateResponse(
+            request,
+            "404.html",
+            page_context(
+                request,
+                title="Page Not Found | Black Metal Buddha",
+                description="The requested Black Metal Buddha page could not be found.",
+                canonical=f"{BASE_URL}{request.url.path}",
+                robots="noindex,nofollow",
+            ),
+            status_code=404,
+        )
+    return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
+
+
 @app.get("/healthz", response_class=PlainTextResponse, include_in_schema=False)
 def healthz() -> str:
     return "ok"
@@ -75,13 +94,26 @@ def healthz() -> str:
 
 @app.get("/", include_in_schema=False)
 def home(request: Request):
-    organization_schema = {
+    structured_data = {
         "@context": "https://schema.org",
-        "@type": "Organization",
-        "name": SITE_NAME,
-        "url": f"{BASE_URL}/",
-        "logo": f"{BASE_URL}{LOGO_PATH}",
-        "description": DEFAULT_DESCRIPTION,
+        "@graph": [
+            {
+                "@type": "Organization",
+                "@id": f"{BASE_URL}/#organization",
+                "name": SITE_NAME,
+                "url": f"{BASE_URL}/",
+                "logo": f"{BASE_URL}{LOGO_PATH}",
+                "description": DEFAULT_DESCRIPTION,
+            },
+            {
+                "@type": "WebSite",
+                "@id": f"{BASE_URL}/#website",
+                "url": f"{BASE_URL}/",
+                "name": SITE_NAME,
+                "publisher": {"@id": f"{BASE_URL}/#organization"},
+                "description": DEFAULT_DESCRIPTION,
+            },
+        ],
     }
     return templates.TemplateResponse(
         request,
@@ -91,7 +123,7 @@ def home(request: Request):
             title="Black Metal Buddha | Ritual Apparel for a Fleeting World",
             description=DEFAULT_DESCRIPTION,
             canonical=f"{BASE_URL}/",
-            structured_data=json.dumps(organization_schema),
+            structured_data=json.dumps(structured_data),
         ),
     )
 
