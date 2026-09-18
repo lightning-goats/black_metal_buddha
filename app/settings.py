@@ -40,6 +40,7 @@ class Settings:
     admin_username: str | None = None
     admin_password: str | None = None
     admin_refunds_enabled: bool = False
+    admin_cancel_fulfillment_enabled: bool = False
     production_checkout_enabled: bool = False
     production_canary_approved: bool = False
     production_catalog_approved: bool = False
@@ -74,6 +75,7 @@ class Settings:
             admin_username=os.getenv("ADMIN_USERNAME"),
             admin_password=os.getenv("ADMIN_PASSWORD"),
             admin_refunds_enabled=_bool("ADMIN_REFUNDS_ENABLED", False),
+            admin_cancel_fulfillment_enabled=_bool("ADMIN_CANCEL_FULFILLMENT_ENABLED", False),
             production_checkout_enabled=_bool("PRODUCTION_CHECKOUT_ENABLED", False),
             production_canary_approved=_bool("PRODUCTION_CANARY_APPROVED", False),
             production_catalog_approved=_bool("PRODUCTION_CATALOG_APPROVED", False),
