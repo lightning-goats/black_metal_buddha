@@ -61,3 +61,16 @@ def test_security_headers():
     assert response.headers["x-content-type-options"] == "nosniff"
     assert "script-src 'self' 'nonce-" in response.headers["content-security-policy"]
     assert 'nonce="' in response.text
+
+
+def test_checkout_is_hidden_while_phase1_disabled():
+    response = client.get("/checkout")
+    assert response.status_code == 404
+
+
+def test_robots_blocks_transactional_utility_paths():
+    response = client.get("/robots.txt")
+    assert "Disallow: /checkout" in response.text
+    assert "Disallow: /orders/" in response.text
+    assert "Disallow: /admin" in response.text
+    assert "Disallow: /api/" in response.text

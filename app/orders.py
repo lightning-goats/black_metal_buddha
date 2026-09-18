@@ -17,7 +17,7 @@ class OrderError(ValueError):
 
 
 def new_order_number() -> str:
-    return f"BMB-{uuid4().hex[:12].upper()}"
+    return f"BMB-{uuid4().hex[:20].upper()}"
 
 
 def recalculate_total(order: Order) -> None:

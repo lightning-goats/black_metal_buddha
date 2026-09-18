@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import secrets
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -16,6 +17,7 @@ from .catalog import PRODUCT_BY_SLUG, PRODUCTS
 from .db import SessionLocal, init_db
 from .orders import get_order
 from .settings import settings as phase1_settings
+from .storefront import price_floor_by_product, sellable_catalog, sellable_variants_for_product
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_URL = os.getenv("PUBLIC_BASE_URL", "https://blackmetalbuddha.com").rstrip("/")
@@ -26,10 +28,21 @@ DEFAULT_DESCRIPTION = (
     "non-self, and contemplative Buddhist themes."
 )
 
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    # Production schema changes are applied with Alembic. Development and tests
+    # may auto-create the current schema for convenience.
+    if phase1_settings.app_env != "production":
+        init_db()
+    yield
+
+
 app = FastAPI(
     title=SITE_NAME,
     docs_url=None if os.getenv("APP_ENV") == "production" else "/docs",
     redoc_url=None,
+    lifespan=lifespan,
 )
 
 app.mount("/static", StaticFiles(directory=ROOT / "app" / "static"), name="static")
@@ -41,14 +54,6 @@ app.mount(
 
 templates = Jinja2Templates(directory=ROOT / "app" / "templates")
 app.include_router(phase1_router)
-
-
-@app.on_event("startup")
-def phase1_dev_database_bootstrap() -> None:
-    # Production schema changes are applied with Alembic. Development and tests
-    # may auto-create the foundation schema for convenience.
-    if phase1_settings.app_env != "production":
-        init_db()
 
 
 @app.middleware("http")
@@ -65,6 +70,7 @@ async def security_headers(request: Request, call_next):
         "img-src 'self' data:; "
         "style-src 'self'; "
         f"script-src 'self' 'nonce-{nonce}'; "
+        "connect-src 'self'; "
         "base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
     )
     return response
@@ -78,8 +84,16 @@ def page_context(request: Request, **kwargs):
         "logo_path": LOGO_PATH,
         "default_description": DEFAULT_DESCRIPTION,
         "products": PRODUCTS,
+        "phase1_enabled": phase1_settings.phase1_api_enabled,
         **kwargs,
     }
+
+
+def storefront_price_floors() -> dict[str, int]:
+    if not phase1_settings.phase1_api_enabled:
+        return {}
+    with SessionLocal() as session:
+        return price_floor_by_product(session)
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -137,6 +151,7 @@ def home(request: Request):
             description=DEFAULT_DESCRIPTION,
             canonical=f"{BASE_URL}/",
             structured_data=json.dumps(structured_data),
+            price_floors=storefront_price_floors(),
         ),
     )
 
@@ -154,6 +169,7 @@ def shop(request: Request):
                 "Dharma of Decay, and Meditate on Death."
             ),
             canonical=f"{BASE_URL}/shop",
+            price_floors=storefront_price_floors(),
         ),
     )
 
@@ -164,7 +180,12 @@ def product_detail(request: Request, slug: str):
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    product_schema = {
+    variants = []
+    if phase1_settings.phase1_api_enabled:
+        with SessionLocal() as session:
+            variants = sellable_variants_for_product(session, slug)
+
+    product_schema: dict = {
         "@context": "https://schema.org",
         "@type": "Product",
         "name": product.name,
@@ -174,12 +195,24 @@ def product_detail(request: Request, slug: str):
         "image": [f"{BASE_URL}{product.image}"],
         "url": f"{BASE_URL}/products/{product.slug}",
     }
+    if variants:
+        prices = [item.retail_price_cents for item in variants]
+        product_schema["offers"] = {
+            "@type": "AggregateOffer",
+            "priceCurrency": variants[0].currency,
+            "lowPrice": format(min(prices) / 100, ".2f"),
+            "highPrice": format(max(prices) / 100, ".2f"),
+            "offerCount": len(variants),
+            "availability": "https://schema.org/InStock",
+        }
+
     return templates.TemplateResponse(
         request,
         "product.html",
         page_context(
             request,
             product=product,
+            variants=variants,
             title=f"{product.name} | Black Metal Buddha",
             description=product.summary,
             canonical=f"{BASE_URL}/products/{product.slug}",
@@ -229,6 +262,28 @@ def cart(request: Request):
             title="Cart | Black Metal Buddha",
             description="Black Metal Buddha shopping cart.",
             canonical=f"{BASE_URL}/cart",
+            robots="noindex,nofollow",
+        ),
+    )
+
+
+@app.get("/checkout", include_in_schema=False)
+def checkout(request: Request):
+    if not phase1_settings.phase1_api_enabled:
+        raise HTTPException(status_code=404, detail="Checkout unavailable")
+    with SessionLocal() as session:
+        has_variants = bool(sellable_catalog(session))
+    if not has_variants:
+        raise HTTPException(status_code=404, detail="Checkout unavailable")
+
+    return templates.TemplateResponse(
+        request,
+        "checkout.html",
+        page_context(
+            request,
+            title="Checkout | Black Metal Buddha",
+            description="Secure Black Metal Buddha checkout.",
+            canonical=f"{BASE_URL}/checkout",
             robots="noindex,nofollow",
         ),
     )
@@ -290,7 +345,7 @@ def shipping_returns(request: Request):
         page_context(
             request,
             title="Shipping & Returns | Black Metal Buddha",
-            description="Black Metal Buddha shipping and returns information for the pre-launch storefront.",
+            description="Black Metal Buddha shipping and returns information.",
             canonical=f"{BASE_URL}/shipping-returns",
         ),
     )
@@ -312,7 +367,16 @@ def privacy(request: Request):
 
 @app.get("/robots.txt", response_class=PlainTextResponse, include_in_schema=False)
 def robots() -> str:
-    return f"User-agent: *\nAllow: /\nDisallow: /cart\nSitemap: {BASE_URL}/sitemap.xml\n"
+    return (
+        "User-agent: *\n"
+        "Allow: /\n"
+        "Disallow: /cart\n"
+        "Disallow: /checkout\n"
+        "Disallow: /orders/\n"
+        "Disallow: /admin\n"
+        "Disallow: /api/\n"
+        f"Sitemap: {BASE_URL}/sitemap.xml\n"
+    )
 
 
 @app.get("/sitemap.xml", include_in_schema=False)

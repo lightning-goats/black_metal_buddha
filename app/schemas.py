@@ -68,3 +68,13 @@ class SelectShippingIn(BaseModel):
 class RefundRequestIn(BaseModel):
     amount_cents: int | None = Field(default=None, ge=1)
     reason: str = Field(default="Customer refund", min_length=1, max_length=192)
+
+
+class CatalogVariantOut(BaseModel):
+    sku: str
+    product_slug: str
+    product_name: str
+    size: str
+    color: str
+    currency: str
+    retail_price_cents: int

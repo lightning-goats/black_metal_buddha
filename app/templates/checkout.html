@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero shell narrow">
+  <p class="eyebrow">CHECKOUT</p>
+  <h1>Shipping before payment.</h1>
+  <p>Black Metal Buddha verifies your cart and shipping server-side, then hands payment to Square's hosted checkout.</p>
+</section>
+
+<section class="section shell checkout-layout" data-checkout-app>
+  <div class="checkout-main">
+    <div class="checkout-step">
+      <p class="step-number">01</p>
+      <h2>Shipping address</h2>
+      <form data-checkout-form novalidate>
+        <div class="form-grid">
+          <div class="field-group field-full">
+            <label for="checkout-name">Name</label>
+            <input id="checkout-name" name="name" autocomplete="name" required maxlength="200">
+          </div>
+          <div class="field-group">
+            <label for="checkout-email">Email</label>
+            <input id="checkout-email" name="email" type="email" autocomplete="email" required maxlength="320">
+          </div>
+          <div class="field-group">
+            <label for="checkout-phone">Phone <span class="muted">(optional)</span></label>
+            <input id="checkout-phone" name="phone" type="tel" autocomplete="tel" maxlength="18">
+          </div>
+          <div class="field-group field-full">
+            <label for="checkout-address1">Address</label>
+            <input id="checkout-address1" name="address1" autocomplete="address-line1" required maxlength="255">
+          </div>
+          <div class="field-group field-full">
+            <label for="checkout-address2">Address line 2 <span class="muted">(optional)</span></label>
+            <input id="checkout-address2" name="address2" autocomplete="address-line2" maxlength="255">
+          </div>
+          <div class="field-group">
+            <label for="checkout-city">City</label>
+            <input id="checkout-city" name="city" autocomplete="address-level2" required maxlength="128">
+          </div>
+          <div class="field-group">
+            <label for="checkout-state">State</label>
+            <input id="checkout-state" name="state" autocomplete="address-level1" required maxlength="2" placeholder="CO">
+          </div>
+          <div class="field-group">
+            <label for="checkout-postal">ZIP code</label>
+            <input id="checkout-postal" name="postal_code" autocomplete="postal-code" required maxlength="32">
+          </div>
+          <div class="field-group">
+            <label for="checkout-country">Country</label>
+            <select id="checkout-country" name="country_code" autocomplete="country">
+              <option value="US" selected>United States</option>
+            </select>
+          </div>
+        </div>
+        <button class="button button-primary" type="submit" data-quote-button>Get shipping options</button>
+      </form>
+    </div>
+
+    <div class="checkout-step" data-shipping-step hidden>
+      <p class="step-number">02</p>
+      <h2>Shipping</h2>
+      <div data-shipping-rates></div>
+      <button class="button button-primary" type="button" data-square-button disabled>Continue to secure Square checkout</button>
+      <p class="microcopy">Square calculates applicable tax using the store's configured tax rules. Your final total is verified before redirect.</p>
+    </div>
+
+    <div class="checkout-status" data-checkout-status role="status" aria-live="polite"></div>
+  </div>
+
+  <aside class="checkout-summary">
+    <p class="eyebrow">ORDER SUMMARY</p>
+    <div data-checkout-items></div>
+    <div class="summary-line"><span>Merchandise</span><strong data-checkout-subtotal>—</strong></div>
+    <div class="summary-line"><span>Shipping</span><strong data-checkout-shipping>Calculated next</strong></div>
+    <div class="summary-line"><span>Tax</span><strong>Calculated by Square</strong></div>
+  </aside>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/checkout.js" defer></script>
+{% endblock %}

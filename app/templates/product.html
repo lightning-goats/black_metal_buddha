@@ -9,16 +9,56 @@
     <h1>{{ product.name }}</h1>
     <p class="product-subtitle">{{ product.subtitle }}</p>
     <p>{{ product.description }}</p>
-    <div class="launch-note">
-      <strong>Pre-launch preview.</strong>
-      <span>Garment blank, sizing, final price, and print details will be published after sample approval.</span>
-    </div>
-    <button class="button button-primary" type="button" data-add-to-cart data-product-slug="{{ product.slug }}" data-product-name="{{ product.name }}">Add design to preview cart</button>
-    <p class="microcopy">Checkout is intentionally disabled during Phase 0.</p>
+
+    {% if variants %}
+      <div class="purchase-panel"
+           data-product-purchase
+           data-product-slug="{{ product.slug }}"
+           data-product-name="{{ product.name }}"
+           data-product-image="{{ product.image }}">
+        <div class="field-group">
+          <label for="variant-{{ product.slug }}">Size</label>
+          <select id="variant-{{ product.slug }}" data-variant-select>
+            {% for variant in variants %}
+              <option
+                value="{{ variant.sku }}"
+                data-size="{{ variant.size }}"
+                data-color="{{ variant.color }}"
+                data-price-cents="{{ variant.retail_price_cents }}"
+                data-currency="{{ variant.currency }}">
+                {{ variant.size }} · {{ variant.color }} · {{ variant.price_display }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field-group field-small">
+          <label for="quantity-{{ product.slug }}">Quantity</label>
+          <select id="quantity-{{ product.slug }}" data-quantity-select>
+            {% for quantity in range(1, 6) %}<option value="{{ quantity }}">{{ quantity }}</option>{% endfor %}
+          </select>
+        </div>
+        <p class="purchase-price" data-purchase-price>{{ variants[0].price_display }}</p>
+        <button class="button button-primary" type="button" data-add-variant>Add to cart</button>
+        <p class="microcopy">Price and availability are verified again by the server at checkout.</p>
+      </div>
+    {% else %}
+      <div class="launch-note">
+        <strong>Pre-launch preview.</strong>
+        <span>Garment blank, sizing, final price, and print details will be published after sample approval.</span>
+      </div>
+      <button class="button button-primary" type="button" data-add-preview data-product-slug="{{ product.slug }}" data-product-name="{{ product.name }}">Add design to preview cart</button>
+      <p class="microcopy">Checkout is intentionally disabled until production approval.</p>
+    {% endif %}
   </div>
 </section>
 <section class="section shell product-notes">
   <div><h2>Design notes</h2><p>{{ product.summary }}</p></div>
-  <div><h2>Production status</h2><p>Artwork is prepared for print review. Physical samples will be inspected before this design is offered for sale.</p></div>
+  <div><h2>Production status</h2>
+    {% if variants %}
+      <p>This product has approved sellable variants in the store catalog.</p>
+    {% else %}
+      <p>Artwork is prepared for print review. Physical samples will be inspected before this design is offered for sale.</p>
+    {% endif %}
+  </div>
 </section>
 {% endblock %}
