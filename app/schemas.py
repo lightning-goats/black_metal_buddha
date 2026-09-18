@@ -1,18 +1,28 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class AddressIn(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     email: str = Field(min_length=3, max_length=320)
-    phone: str | None = Field(default=None, max_length=64)
+    phone: str | None = Field(default=None, max_length=18)
     address1: str = Field(min_length=1, max_length=255)
     address2: str | None = Field(default=None, max_length=255)
     city: str = Field(min_length=1, max_length=128)
     state: str = Field(min_length=1, max_length=128)
     postal_code: str = Field(min_length=1, max_length=32)
     country_code: str = Field(default="US", min_length=2, max_length=2)
+
+    @model_validator(mode="after")
+    def normalize_address(self):
+        self.country_code = self.country_code.upper()
+        self.state = self.state.upper()
+        if self.country_code in {"US", "CA"} and len(self.state) != 2:
+            raise ValueError("US and Canadian addresses require a 2-letter state/province code")
+        if self.country_code == "AU" and not (2 <= len(self.state) <= 3):
+            raise ValueError("Australian addresses require a state/territory code")
+        return self
 
 
 class OrderLineIn(BaseModel):
