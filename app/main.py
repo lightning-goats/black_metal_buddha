@@ -346,6 +346,20 @@ def order_status(request: Request, order_number: str):
         )
 
 
+@app.get("/contact", include_in_schema=False)
+def contact(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "contact.html",
+        page_context(
+            request,
+            title="Contact | Black Metal Buddha",
+            description="Contact Black Metal Buddha for order, product, shipping, or privacy support.",
+            canonical=f"{BASE_URL}/contact",
+        ),
+    )
+
+
 @app.get("/shipping-returns", include_in_schema=False)
 def shipping_returns(request: Request):
     return templates.TemplateResponse(
@@ -390,7 +404,7 @@ def robots() -> str:
 
 @app.get("/sitemap.xml", include_in_schema=False)
 def sitemap() -> Response:
-    paths = ["/", "/shop", "/about", "/faq", "/shipping-returns", "/privacy"]
+    paths = ["/", "/shop", "/about", "/faq", "/contact", "/shipping-returns", "/privacy"]
     paths.extend(f"/products/{product.slug}" for product in PRODUCTS)
     urls = "".join(f"<url><loc>{BASE_URL}{path}</loc></url>" for path in paths)
     xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
