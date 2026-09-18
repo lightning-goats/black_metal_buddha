@@ -3,11 +3,44 @@
 <section class="page-hero shell narrow">
   <p class="eyebrow">INFORMATION</p>
   <h1>Shipping & Returns</h1>
-  <p>Sales have not opened yet. Final shipping territories, delivery estimates, and return rules will be published before checkout is enabled.</p>
+  {% if phase1_enabled %}
+    <p>Every shirt is made to order. Shipping options and charges are shown before you continue to Square payment.</p>
+  {% else %}
+    <p>Sales are not open yet. This is the policy planned for launch and may be refined before checkout is enabled.</p>
+  {% endif %}
 </section>
 <section class="section shell prose-grid">
-  <article><h2>Fulfillment</h2><p>The launch plan uses Printful for automated print-on-demand fulfillment after a verified Square payment.</p></article>
-  <article><h2>Shipping</h2><p>Rates and supported destinations will be confirmed after the exact garment and Printful variant are selected.</p></article>
-  <article><h2>Returns</h2><p>Defect, misprint, sizing, and buyer-remorse policies will be stated clearly before sales open.</p></article>
+  <article>
+    <h2>Fulfillment</h2>
+    <p>Black Metal Buddha uses Printful for print-on-demand production and shipping. We submit an order for fulfillment only after Square confirms payment.</p>
+  </article>
+  <article>
+    <h2>Shipping</h2>
+    <p>Available shipping methods and rates are requested from Printful for your delivery address during checkout. Delivery dates are estimates rather than guarantees. Tracking appears on your order-status page when supplied by the carrier.</p>
+  </article>
+  <article>
+    <h2>Damaged, defective, or misprinted</h2>
+    <p>Contact us within 30 days of delivery if an item arrives damaged, defective, misprinted, or materially different from the item ordered. We may ask for clear photographs so the fulfillment claim can be reviewed. Eligible claims will be resolved with a replacement or refund as appropriate.</p>
+  </article>
+  <article>
+    <h2>Lost in transit</h2>
+    <p>Please report a package that appears lost within 30 days after its estimated delivery date. We will review the carrier and fulfillment record and arrange the appropriate remedy when the shipment qualifies as lost.</p>
+  </article>
+  <article>
+    <h2>Size, color, and change of mind</h2>
+    <p>Products are made to order, so we generally do not accept returns or exchanges for buyer's remorse, ordering the wrong size, or choosing the wrong color. This does not limit rights that cannot legally be waived in your jurisdiction.</p>
+  </article>
+  <article>
+    <h2>Address problems</h2>
+    <p>Please review your shipping address carefully. Orders returned because of an incomplete or incorrect address may require a new shipping charge before they can be sent again.</p>
+  </article>
+</section>
+<section class="section shell narrow">
+  <h2>Need help?</h2>
+  {% if support_email %}
+    <p>Email <a href="mailto:{{ support_email }}">{{ support_email }}</a> and include your Black Metal Buddha order number.</p>
+  {% else %}
+    <p>Customer support contact information will be published before checkout opens.</p>
+  {% endif %}
 </section>
 {% endblock %}
