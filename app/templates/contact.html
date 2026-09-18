@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero shell narrow">
+  <p class="eyebrow">CONTACT</p>
+  <h1>Reach Black Metal Buddha.</h1>
+  {% if support_email %}
+    <p>For order, shipping, product, or privacy support, email <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+  {% else %}
+    <p>The support address is not configured yet. Contact information will be published before checkout opens.</p>
+  {% endif %}
+</section>
+<section class="section shell narrow">
+  <p>When contacting us about an order, include the <strong>BMB-…</strong> order number shown on your confirmation or order-status page. Do not send card numbers or other payment credentials by email.</p>
+</section>
+{% endblock %}
