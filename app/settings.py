@@ -36,6 +36,13 @@ class Settings:
     smtp_password: str | None
     email_from: str | None
     printful_confirm_enabled: bool = False
+    app_secret_key: str | None = None
+    admin_username: str | None = None
+    admin_password: str | None = None
+    admin_refunds_enabled: bool = False
+    production_checkout_enabled: bool = False
+    production_canary_approved: bool = False
+    production_catalog_approved: bool = False
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -63,6 +70,13 @@ class Settings:
             smtp_password=os.getenv("SMTP_PASSWORD"),
             email_from=os.getenv("EMAIL_FROM"),
             printful_confirm_enabled=_bool("PRINTFUL_CONFIRM_ENABLED", False),
+            app_secret_key=os.getenv("APP_SECRET_KEY"),
+            admin_username=os.getenv("ADMIN_USERNAME"),
+            admin_password=os.getenv("ADMIN_PASSWORD"),
+            admin_refunds_enabled=_bool("ADMIN_REFUNDS_ENABLED", False),
+            production_checkout_enabled=_bool("PRODUCTION_CHECKOUT_ENABLED", False),
+            production_canary_approved=_bool("PRODUCTION_CANARY_APPROVED", False),
+            production_catalog_approved=_bool("PRODUCTION_CATALOG_APPROVED", False),
         )
 
     @property
@@ -71,6 +85,10 @@ class Settings:
             return "https://connect.squareup.com"
         return "https://connect.squareupsandbox.com"
 
+    @property
+    def admin_enabled(self) -> bool:
+        return bool(self.admin_username and self.admin_password and self.app_secret_key)
+
     def validate_safety(self) -> None:
         if self.printful_mode not in {"disabled", "draft", "production"}:
             raise ValueError("PRINTFUL_MODE must be disabled, draft, or production")
@@ -78,15 +96,60 @@ class Settings:
             raise ValueError("EMAIL_MODE must be disabled, console, or smtp")
         if self.email_mode == "smtp" and (not self.smtp_host or not self.email_from):
             raise ValueError("SMTP_HOST and EMAIL_FROM are required when EMAIL_MODE=smtp")
+
+        any_admin = bool(self.admin_username or self.admin_password or self.app_secret_key)
+        if any_admin and not self.admin_enabled:
+            raise ValueError(
+                "ADMIN_USERNAME, ADMIN_PASSWORD, and APP_SECRET_KEY must be configured together"
+            )
+
         if self.printful_mode == "production":
             if not self.phase0_5_approved:
                 raise ValueError("Production Printful fulfillment requires PHASE0_5_APPROVED=true")
             if not self.printful_confirm_enabled:
                 raise ValueError("Production Printful fulfillment requires PRINTFUL_CONFIRM_ENABLED=true")
+
         if self.app_env == "production" and self.phase1_api_enabled:
-            raise ValueError(
-                "Production checkout is intentionally blocked in the Phase 1 foundation"
-            )
+            missing: list[str] = []
+            if not self.production_checkout_enabled:
+                missing.append("PRODUCTION_CHECKOUT_ENABLED")
+            if not self.phase0_5_approved:
+                missing.append("PHASE0_5_APPROVED")
+            if not self.production_canary_approved:
+                missing.append("PRODUCTION_CANARY_APPROVED")
+            if not self.production_catalog_approved:
+                missing.append("PRODUCTION_CATALOG_APPROVED")
+            if self.square_environment != "production":
+                missing.append("SQUARE_ENVIRONMENT=production")
+            if self.printful_mode != "production":
+                missing.append("PRINTFUL_MODE=production")
+            if not self.printful_confirm_enabled:
+                missing.append("PRINTFUL_CONFIRM_ENABLED")
+            if self.email_mode != "smtp":
+                missing.append("EMAIL_MODE=smtp")
+            if self.database_url.startswith("sqlite"):
+                missing.append("PostgreSQL DATABASE_URL")
+            if not self.admin_enabled:
+                missing.append("admin credentials + APP_SECRET_KEY")
+            if not self.square_access_token:
+                missing.append("SQUARE_ACCESS_TOKEN")
+            if not self.square_location_id:
+                missing.append("SQUARE_LOCATION_ID")
+            if not self.square_webhook_signature_key:
+                missing.append("SQUARE_WEBHOOK_SIGNATURE_KEY")
+            if not self.square_webhook_notification_url:
+                missing.append("SQUARE_WEBHOOK_NOTIFICATION_URL")
+            if not self.printful_token:
+                missing.append("PRINTFUL_TOKEN")
+            if not self.printful_store_id:
+                missing.append("PRINTFUL_STORE_ID")
+            if not self.printful_webhook_secret_key:
+                missing.append("PRINTFUL_WEBHOOK_SECRET_KEY")
+            if missing:
+                raise ValueError(
+                    "Production checkout prerequisites are not satisfied: "
+                    + ", ".join(missing)
+                )
 
 
 settings = Settings.from_env()
