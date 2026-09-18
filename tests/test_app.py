@@ -79,3 +79,11 @@ def test_robots_blocks_transactional_utility_paths():
 def test_admin_is_hidden_when_not_configured():
     response = client.get("/admin")
     assert response.status_code == 404
+
+
+def test_contact_page_and_sitemap_entry():
+    response = client.get("/contact")
+    assert response.status_code == 200
+    assert "Reach Black Metal Buddha" in response.text
+    sitemap = client.get("/sitemap.xml")
+    assert "/contact" in sitemap.text
