@@ -1,0 +1,111 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<section class="admin-page-head">
+  <div><p class="eyebrow">ORDER</p><h1>{{ order.order_number }}</h1></div>
+  <a class="button button-ghost" href="/orders/{{ order.order_number }}">Customer view</a>
+</section>
+
+<div class="admin-detail-grid">
+<section class="admin-panel">
+  <h2>State</h2>
+  <dl class="admin-dl">
+    <dt>Order</dt><dd>{{ order.order_state }}</dd>
+    <dt>Payment</dt><dd>{{ order.payment_state }}</dd>
+    <dt>Fulfillment</dt><dd>{{ order.fulfillment_state }}</dd>
+    <dt>Refund</dt><dd>{{ order.refund_state }}</dd>
+    <dt>Total</dt><dd>{{ order.currency }} {{ '%.2f' | format(order.total_cents / 100) }}</dd>
+    <dt>Refunded</dt><dd>{{ order.currency }} {{ '%.2f' | format(order.refunded_cents / 100) }}</dd>
+    <dt>Printful cost</dt><dd>{% if order.printful_cost_cents is not none %}{{ order.printful_cost_currency }} {{ '%.2f' | format(order.printful_cost_cents / 100) }}{% else %}—{% endif %}</dd>
+  </dl>
+</section>
+
+<section class="admin-panel">
+  <h2>Recipient</h2>
+  <p>{{ order.customer_name }}<br>{{ order.email }}{% if order.phone %}<br>{{ order.phone }}{% endif %}</p>
+  <p>{{ order.ship_address1 }}{% if order.ship_address2 %}<br>{{ order.ship_address2 }}{% endif %}<br>{{ order.ship_city }}, {{ order.ship_state }} {{ order.ship_postal_code }}<br>{{ order.ship_country }}</p>
+</section>
+
+<section class="admin-panel">
+  <h2>Provider IDs</h2>
+  <dl class="admin-dl">
+    <dt>Square order</dt><dd>{{ order.square_order_id or '—' }}</dd>
+    <dt>Square payment</dt><dd>{{ order.square_payment_id or '—' }}</dd>
+    <dt>Printful order</dt><dd>{{ order.printful_order_id or '—' }}</dd>
+    <dt>Printful external</dt><dd>{{ order.printful_external_id or '—' }}</dd>
+  </dl>
+</section>
+
+<section class="admin-panel">
+  <h2>Actions</h2>
+  <div class="admin-actions">
+    <form method="post" action="/admin/orders/{{ order.order_number }}/reconcile">
+      <input type="hidden" name="csrf" value="{{ token_reconcile }}">
+      <button class="button button-ghost" type="submit">Reconcile providers</button>
+    </form>
+    <form method="post" action="/admin/orders/{{ order.order_number }}/retry-jobs">
+      <input type="hidden" name="csrf" value="{{ token_retry }}">
+      <button class="button button-ghost" type="submit">Retry failed jobs</button>
+    </form>
+    {% if settings.admin_cancel_fulfillment_enabled and order.printful_external_id %}
+    <form method="post" action="/admin/orders/{{ order.order_number }}/cancel-printful">
+      <input type="hidden" name="csrf" value="{{ token_cancel }}">
+      <button class="button button-danger" type="submit">Cancel Printful order</button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if settings.admin_refunds_enabled and order.payment_state == 'COMPLETED' %}
+  <form class="admin-refund-form" method="post" action="/admin/orders/{{ order.order_number }}/refund">
+    <input type="hidden" name="csrf" value="{{ token_refund }}">
+    <label>Refund amount in {{ order.currency }} <input name="amount" inputmode="decimal" placeholder="blank = remaining balance"></label>
+    <label>Reason <input name="reason" value="Customer refund" maxlength="192"></label>
+    <button class="button button-danger" type="submit">Request Square refund</button>
+  </form>
+  {% endif %}
+</section>
+</div>
+
+<section class="admin-panel">
+  <h2>Items</h2>
+  <div class="admin-table-wrap"><table class="admin-table">
+    <thead><tr><th>SKU</th><th>Product</th><th>Variant</th><th>Qty</th><th>Unit</th><th>Line</th></tr></thead>
+    <tbody>{% for item in order.items %}
+      <tr><td>{{ item.sku_snapshot }}</td><td>{{ item.name_snapshot }}</td><td>{{ item.color_snapshot }} / {{ item.size_snapshot }}</td><td>{{ item.quantity }}</td><td>{{ order.currency }} {{ '%.2f' | format(item.unit_price_cents / 100) }}</td><td>{{ order.currency }} {{ '%.2f' | format(item.line_total_cents / 100) }}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+</section>
+
+<section class="admin-panel">
+  <h2>Shipments</h2>
+  {% if order.shipments %}
+  <div class="admin-table-wrap"><table class="admin-table">
+    <thead><tr><th>ID</th><th>Status</th><th>Tracking</th><th>Reshipment</th></tr></thead>
+    <tbody>{% for shipment in order.shipments %}
+      <tr><td>{{ shipment.printful_shipment_id }}</td><td>{{ shipment.status }}</td><td>{% if shipment.tracking_url %}<a href="{{ shipment.tracking_url }}" rel="noopener noreferrer">{{ shipment.tracking_number or 'Track' }}</a>{% else %}{{ shipment.tracking_number or '—' }}{% endif %}</td><td>{{ shipment.reshipment }}</td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="muted">No shipments recorded.</p>{% endif %}
+</section>
+
+<section class="admin-panel">
+  <h2>Jobs</h2>
+  <div class="admin-table-wrap"><table class="admin-table">
+    <thead><tr><th>Type</th><th>State</th><th>Attempts</th><th>Next</th><th>Error</th></tr></thead>
+    <tbody>{% for job in jobs %}<tr><td>{{ job.job_type }}</td><td>{{ job.state }}</td><td>{{ job.attempt_count }}</td><td>{{ job.next_attempt_at }}</td><td>{{ job.last_error or '—' }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+</section>
+
+{% if refunds %}
+<section class="admin-panel"><h2>Refunds</h2>
+  <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>ID</th><th>Status</th><th>Amount</th><th>Reason</th></tr></thead>
+  <tbody>{% for refund in refunds %}<tr><td>{{ refund.square_refund_id }}</td><td>{{ refund.status }}</td><td>{{ refund.currency }} {{ '%.2f' | format(refund.amount_cents / 100) }}</td><td>{{ refund.reason or '—' }}</td></tr>{% endfor %}</tbody></table></div>
+</section>
+{% endif %}
+
+{% if audits %}
+<section class="admin-panel"><h2>Audit</h2>
+  <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Details</th></tr></thead>
+  <tbody>{% for entry in audits %}<tr><td>{{ entry.created_at }}</td><td>{{ entry.actor }}</td><td>{{ entry.action }}</td><td><code>{{ entry.details_json or '' }}</code></td></tr>{% endfor %}</tbody></table></div>
+</section>
+{% endif %}
+{% endblock %}
