@@ -119,6 +119,16 @@ def get_order_by_square_order_id(session: Session, square_order_id: str) -> Orde
     return session.scalar(select(Order).where(Order.square_order_id == square_order_id))
 
 
+def shipping_quote_is_fresh(order: Order, *, max_age_minutes: int = 15) -> bool:
+    if not order.shipping_method or order.shipping_quoted_at is None:
+        return False
+    quoted_at = order.shipping_quoted_at
+    if quoted_at.tzinfo is None:
+        quoted_at = quoted_at.replace(tzinfo=timezone.utc)
+    age = datetime.now(timezone.utc) - quoted_at
+    return age.total_seconds() <= max_age_minutes * 60
+
+
 def set_shipping_rate(
     session: Session,
     order: Order,
