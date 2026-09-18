@@ -87,3 +87,15 @@ def test_contact_page_and_sitemap_entry():
     assert "Reach Black Metal Buddha" in response.text
     sitemap = client.get("/sitemap.xml")
     assert "/contact" in sitemap.text
+
+
+def test_sensitive_routes_are_no_store_and_noindex():
+    response = client.get("/checkout")
+    # Checkout is hidden with Phase 1 disabled, but sensitive response headers
+    # must still prevent browser/proxy caching and indexing.
+    assert response.headers["cache-control"] == "no-store, max-age=0"
+    assert response.headers["x-robots-tag"] == "noindex, nofollow"
+
+    response = client.get("/admin")
+    assert response.headers["cache-control"] == "no-store, max-age=0"
+    assert response.headers["x-robots-tag"] == "noindex, nofollow"
