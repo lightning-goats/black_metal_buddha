@@ -18,9 +18,10 @@
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/static/site.css">
   <script src="/static/cart.js" defer></script>
+  {% block head_scripts %}{% endblock %}
   {% if structured_data %}<script type="application/ld+json" nonce="{{ request.state.csp_nonce }}">{{ structured_data | safe }}</script>{% endif %}
 </head>
-<body>
+<body data-phase1-enabled="{{ 'true' if phase1_enabled else 'false' }}">
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <div class="shell header-inner">
@@ -49,5 +50,6 @@
     </div>
     <div class="shell footer-bottom"><span>© 2026 Black Metal Buddha.</span><span>All things pass.</span></div>
   </footer>
+{% block scripts %}{% endblock %}
 </body>
 </html>
