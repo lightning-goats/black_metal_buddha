@@ -59,19 +59,18 @@ Once PostgreSQL (or SQLite for local development) is migrated and a test Product
 
 ## Important unfinished launch work
 
-The foundation deliberately does **not** yet provide:
+Subsequent Phase 1 increments now provide live Printful shipping quotes, Square-managed tax synchronization, refunds, transactional email jobs, and provider reconciliation.
 
-- live product variants/prices
-- shipping-rate calculation
-- sales-tax calculation
-- buyer-edited Square shipping-address reconciliation
+The remaining launch work includes:
+
+- final approved product variants/prices
+- validation of Square tax configuration on the real merchant account
 - production Printful confirmation
-- refunds
-- transactional email
 - owner/admin UI
-- periodic Square reconciliation
+- production transactional-email provider credentials
+- production canary and rollback procedure
 
-Those are subsequent Phase 1 increments.
+Production checkout and Printful confirmation remain hard-blocked until those gates pass.
 
 ## Migrations
 
