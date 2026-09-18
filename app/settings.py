@@ -63,10 +63,9 @@ class Settings:
         if self.printful_mode == "production" and not self.phase0_5_approved:
             raise ValueError("Production Printful fulfillment requires PHASE0_5_APPROVED=true")
         if self.app_env == "production" and self.phase1_api_enabled:
-            if self.database_url.startswith("sqlite"):
-                raise ValueError("Phase 1 production checkout requires PostgreSQL")
-            if self.square_environment != "production":
-                raise ValueError("Phase 1 production checkout requires SQUARE_ENVIRONMENT=production")
+            raise ValueError(
+                "Production checkout is intentionally blocked in the Phase 1 foundation"
+            )
 
 
 settings = Settings.from_env()
