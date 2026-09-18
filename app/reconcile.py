@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from .fulfillment.printful import PrintfulClient
 from .models import Order
-from .orders import mark_paid_and_enqueue
+from .orders import mark_paid_and_enqueue, sync_square_pricing
 from .payments.square import SquareClient
 
 
@@ -39,6 +39,7 @@ def reconcile_square_order(
         return "NO_SQUARE_ORDER"
 
     square_order = client.get_order(order.square_order_id)
+    sync_square_pricing(session, order, square_order)
     payment_id = client.payment_id_from_order(square_order)
     if not payment_id:
         return "NO_PAYMENT"
