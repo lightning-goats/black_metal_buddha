@@ -15,6 +15,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .admin import router as admin_router
 from .api_phase1 import router as phase1_router
 from .catalog import PRODUCT_BY_SLUG, PRODUCTS
+from .catalog_ops import assert_production_catalog
 from .db import SessionLocal, init_db
 from .orders import get_order
 from .settings import settings as phase1_settings
@@ -36,6 +37,12 @@ async def lifespan(_: FastAPI):
     # may auto-create the current schema for convenience.
     if phase1_settings.app_env != "production":
         init_db()
+    elif phase1_settings.phase1_api_enabled:
+        with SessionLocal() as session:
+            assert_production_catalog(
+                session,
+                phase1_settings.production_catalog_fingerprint,
+            )
     yield
 
 
