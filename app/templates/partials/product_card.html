@@ -6,6 +6,9 @@
     <p class="product-kicker">{{ item.subtitle }}</p>
     <h3><a href="/products/{{ item.slug }}">{{ item.name }}</a></h3>
     <p>{{ item.summary }}</p>
+    {% if price_floors and item.slug in price_floors %}
+      <p class="product-price">From &#36;{{ '%.2f' | format(price_floors[item.slug] / 100) }}</p>
+    {% endif %}
     <a class="text-link" href="/products/{{ item.slug }}">View design →</a>
   </div>
 </article>
