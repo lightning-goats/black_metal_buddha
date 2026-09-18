@@ -22,5 +22,6 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt pytest
       - run: python -m compileall -q app
+      - run: bash -n deploy/*.sh
       - run: alembic upgrade head
       - run: pytest -q
