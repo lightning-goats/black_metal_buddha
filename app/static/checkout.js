@@ -197,6 +197,7 @@
         body: '{}'
       });
       if (!checkout.square_checkout_url) throw new Error('Square checkout URL was not returned.');
+      sessionStorage.setItem('bmb-active-order', orderNumber);
       window.location.assign(checkout.square_checkout_url);
     } catch (error) {
       squareButton.disabled = false;
