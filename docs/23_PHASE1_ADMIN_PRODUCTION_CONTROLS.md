@@ -151,6 +151,7 @@ DATABASE_URL=<PostgreSQL, not SQLite>
 APP_SECRET_KEY=<configured>
 ADMIN_USERNAME=<configured>
 ADMIN_PASSWORD=<configured>
+SUPPORT_EMAIL=<configured>
 ```
 
 If any prerequisite is missing, application startup fails rather than silently opening an incomplete store.
