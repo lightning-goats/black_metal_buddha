@@ -78,6 +78,11 @@ def settings(**overrides):
         production_catalog_approved=True,
         production_catalog_fingerprint="a" * 64,
         production_canary_mode=True,
+        production_checkout_enabled=False,
+        app_secret_key="secret",
+        admin_username="owner",
+        admin_password="password",
+        support_email="support@example.com",
     )
     data.update(overrides)
     return Settings(**data)
