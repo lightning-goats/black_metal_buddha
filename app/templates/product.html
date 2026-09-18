@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="product-detail shell">
+  <div class="product-detail-image">
+    <img src="{{ product.image }}" alt="{{ product.image_alt }}" width="1000" height="1000">
+  </div>
+  <div class="product-detail-copy">
+    <p class="eyebrow">BLACK METAL BUDDHA</p>
+    <h1>{{ product.name }}</h1>
+    <p class="product-subtitle">{{ product.subtitle }}</p>
+    <p>{{ product.description }}</p>
+    <div class="launch-note">
+      <strong>Pre-launch preview.</strong>
+      <span>Garment blank, sizing, final price, and print details will be published after sample approval.</span>
+    </div>
+    <button class="button button-primary" type="button" data-add-to-cart data-product-slug="{{ product.slug }}" data-product-name="{{ product.name }}">Add design to preview cart</button>
+    <p class="microcopy">Checkout is intentionally disabled during Phase 0.</p>
+  </div>
+</section>
+<section class="section shell product-notes">
+  <div><h2>Design notes</h2><p>{{ product.summary }}</p></div>
+  <div><h2>Production status</h2><p>Artwork is prepared for print review. Physical samples will be inspected before this design is offered for sale.</p></div>
+</section>
+{% endblock %}

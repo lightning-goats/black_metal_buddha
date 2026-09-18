@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero shell narrow">
+  <p class="eyebrow">FAQ</p>
+  <h1>Questions before the first drop.</h1>
+</section>
+<section class="section shell faq-list">
+  <details open><summary>Can I buy the shirts yet?</summary><p>Not yet. The storefront is in Phase 0 while physical samples are being approved. Checkout will open only after production and fulfillment are validated.</p></details>
+  <details><summary>Who will print and ship the shirts?</summary><p>The current plan is automated print-on-demand fulfillment through Printful. Exact product details will be published before sales open.</p></details>
+  <details><summary>How will payments work?</summary><p>Phase 1 will use Square for fiat checkout. Lightning payments are intentionally deferred until Square offers an official API path that can settle Lightning payments automatically to fiat for this ecommerce flow.</p></details>
+  <details><summary>Are the designs connected to a Buddhist organization?</summary><p>No. Black Metal Buddha is an independent art and apparel project and does not represent a Buddhist lineage, temple, teacher, or institution.</p></details>
+</section>
+{% endblock %}
