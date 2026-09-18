@@ -99,6 +99,15 @@ class PrintfulClient:
             )
         return rates
 
+    def get_shipments(self, order_id_or_external_id: str) -> list[dict[str, Any]]:
+        response = self.client.get(
+            f"{self.API_BASE}/v2/orders/{order_id_or_external_id}/shipments",
+            headers=self._headers(),
+            params={"limit": 100, "offset": 0},
+        )
+        response.raise_for_status()
+        return response.json().get("data") or []
+
     def get_order_by_external_id(self, external_id: str) -> dict[str, Any] | None:
         response = self.client.get(
             f"{self.API_BASE}/v2/orders/@{external_id}",
