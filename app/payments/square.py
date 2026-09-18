@@ -1,0 +1,114 @@
+from __future__ import annotations
+
+import base64
+import hashlib
+import hmac
+from typing import Any
+
+import httpx
+
+from ..models import Order
+from ..settings import Settings, settings
+
+
+class SquareConfigurationError(RuntimeError):
+    pass
+
+
+class SquareClient:
+    def __init__(self, config: Settings = settings, client: httpx.Client | None = None):
+        self.config = config
+        self.client = client or httpx.Client(timeout=20)
+
+    def _headers(self) -> dict[str, str]:
+        if not self.config.square_access_token:
+            raise SquareConfigurationError("SQUARE_ACCESS_TOKEN is not configured")
+        return {
+            "Authorization": f"Bearer {self.config.square_access_token}",
+            "Square-Version": self.config.square_api_version,
+            "Content-Type": "application/json",
+        }
+
+    def create_payment_link(self, order: Order) -> dict[str, Any]:
+        if not self.config.square_location_id:
+            raise SquareConfigurationError("SQUARE_LOCATION_ID is not configured")
+
+        buyer_address = {
+            "address_line_1": order.ship_address1,
+            "locality": order.ship_city,
+            "administrative_district_level_1": order.ship_state,
+            "postal_code": order.ship_postal_code,
+            "country": order.ship_country,
+        }
+        if order.ship_address2:
+            buyer_address["address_line_2"] = order.ship_address2
+
+        pre_populated_data = {
+            "buyer_email": order.email,
+            "buyer_address": buyer_address,
+        }
+        if order.phone:
+            pre_populated_data["buyer_phone_number"] = order.phone
+
+        payload = {
+            "idempotency_key": f"checkout-{order.order_number}",
+            "description": f"Black Metal Buddha order {order.order_number}",
+            "order": {
+                "location_id": self.config.square_location_id,
+                "reference_id": order.order_number,
+                "line_items": [
+                    {
+                        "name": item.name_snapshot,
+                        "quantity": str(item.quantity),
+                        "base_price_money": {
+                            "amount": item.unit_price_cents,
+                            "currency": order.currency,
+                        },
+                        "variation_name": f"{item.color_snapshot} / {item.size_snapshot}",
+                    }
+                    for item in order.items
+                ],
+            },
+            "checkout_options": {
+                "redirect_url": f"{self.config.public_base_url}/orders/{order.order_number}",
+                "ask_for_shipping_address": True,
+                "allow_tipping": False,
+            },
+            "pre_populated_data": pre_populated_data,
+            "payment_note": order.order_number,
+        }
+
+        response = self.client.post(
+            f"{self.config.square_api_base}/v2/online-checkout/payment-links",
+            headers=self._headers(),
+            json=payload,
+        )
+        response.raise_for_status()
+        payment_link = (response.json().get("payment_link") or {})
+        if not payment_link.get("id") or not payment_link.get("order_id") or not payment_link.get("url"):
+            raise RuntimeError("Square response did not contain a complete payment link")
+        return payment_link
+
+    def get_payment(self, payment_id: str) -> dict[str, Any]:
+        response = self.client.get(
+            f"{self.config.square_api_base}/v2/payments/{payment_id}",
+            headers=self._headers(),
+        )
+        response.raise_for_status()
+        return response.json().get("payment") or {}
+
+
+def verify_square_webhook(
+    body: bytes,
+    signature: str | None,
+    *,
+    signature_key: str | None = None,
+    notification_url: str | None = None,
+) -> bool:
+    key = signature_key or settings.square_webhook_signature_key
+    url = notification_url or settings.square_webhook_notification_url
+    if not signature or not key or not url:
+        return False
+    digest = hmac.new(key.encode(), url.encode() + body, hashlib.sha256).digest()
+    expected = base64.b64encode(digest).decode()
+    return hmac.compare_digest(expected, signature)

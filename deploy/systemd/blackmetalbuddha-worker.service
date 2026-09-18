@@ -1,0 +1,23 @@
+[Unit]
+Description=Black Metal Buddha Phase 1 background worker
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=blackmetalbuddha
+Group=blackmetalbuddha
+WorkingDirectory=/opt/blackmetalbuddha/current
+EnvironmentFile=/etc/blackmetalbuddha/blackmetalbuddha.env
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/blackmetalbuddha/venv/bin/python -m app.worker
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

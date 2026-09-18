@@ -8,12 +8,19 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      APP_ENV: development
+      DATABASE_URL: sqlite:///./ci.db
+      PHASE1_API_ENABLED: "false"
+      PRINTFUL_MODE: disabled
+      PHASE0_5_APPROVED: "false"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -r requirements.txt pytest httpx
+      - run: pip install -r requirements.txt pytest
       - run: python -m compileall -q app
+      - run: alembic upgrade head
       - run: pytest -q
