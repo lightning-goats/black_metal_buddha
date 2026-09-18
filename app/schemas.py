@@ -34,8 +34,11 @@ class OrderOut(BaseModel):
     subtotal_cents: int
     discount_cents: int
     shipping_cents: int
+    shipping_method: str | None = None
     tax_cents: int
     total_cents: int
+    refunded_cents: int = 0
+    refund_state: str = "NONE"
     square_checkout_url: str | None = None
 
 
