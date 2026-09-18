@@ -88,6 +88,7 @@ EMAIL_MODE=smtp
 working SMTP configuration
 
 PostgreSQL DATABASE_URL
+SUPPORT_EMAIL
 ```
 
 The public checkout route remains hidden while the webhook, worker, admin, and canary paths remain usable.
@@ -240,7 +241,7 @@ PRODUCTION_CATALOG_APPROVED=true
 PHASE0_5_APPROVED=true
 ```
 
-All other live Square, Printful, SMTP, PostgreSQL, admin, and fingerprint prerequisites must also remain configured.
+All other live Square, Printful, SMTP, PostgreSQL, admin, support-contact, and fingerprint prerequisites must also remain configured.
 
 Restart:
 
