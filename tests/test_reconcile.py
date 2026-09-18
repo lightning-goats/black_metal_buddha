@@ -52,8 +52,23 @@ def create_test_order(session):
 
 
 class SquarePaid:
+    order_number = ""
+
     def get_order(self, order_id):
-        return {"id": order_id, "tenders": [{"payment_id": "PAY123"}]}
+        return {
+            "id": order_id,
+            "reference_id": self.order_number,
+            "line_items": [{
+                "name": "Lotus of the Void",
+                "quantity": "1",
+                "base_price_money": {"amount": 3200, "currency": "USD"},
+            }],
+            "total_service_charge_money": {"amount": 0, "currency": "USD"},
+            "total_discount_money": {"amount": 0, "currency": "USD"},
+            "total_tax_money": {"amount": 0, "currency": "USD"},
+            "total_money": {"amount": 3200, "currency": "USD"},
+            "tenders": [{"payment_id": "PAY123"}],
+        }
 
     def get_payment(self, payment_id):
         return {
@@ -85,11 +100,13 @@ def test_square_reconciliation_repairs_missed_webhook(session):
     order.square_order_id = "SQORDER"
     session.commit()
 
-    result = reconcile_square_order(session, order, client=SquarePaid())
+    client = SquarePaid()
+    client.order_number = order.order_number
+    result = reconcile_square_order(session, order, client=client)
     assert result == "PAID"
     assert order.payment_state == "COMPLETED"
     assert order.square_payment_id == "PAY123"
-    assert len(session.scalars(select(Job)).all()) == 1
+    assert len(session.scalars(select(Job)).all()) == 2
 
 
 def test_square_reconciliation_rejects_amount_mismatch(session):
@@ -97,8 +114,10 @@ def test_square_reconciliation_rejects_amount_mismatch(session):
     order.square_order_id = "SQORDER"
     session.commit()
 
+    client = SquareWrongAmount()
+    client.order_number = order.order_number
     with pytest.raises(ReconciliationError):
-        reconcile_square_order(session, order, client=SquareWrongAmount())
+        reconcile_square_order(session, order, client=client)
     assert order.payment_state != "COMPLETED"
 
 

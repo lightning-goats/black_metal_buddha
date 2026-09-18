@@ -1,6 +1,6 @@
 # Phase 0.5 — Physical Product & Print Validation
 
-**Status:** Planned  
+**Status:** In progress — first physical test print ordered 2026-09-18  
 **Purpose:** establish the exact garment, print method, placement, and production artwork that Black Metal Buddha will sell before Phase 1 checkout is enabled.
 
 ## Why this phase is a launch gate

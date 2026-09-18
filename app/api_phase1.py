@@ -9,18 +9,23 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .db import SessionLocal
-from .fulfillment.printful import verify_printful_webhook
+from .fulfillment.printful import PrintfulClient, verify_printful_webhook
 from .models import FulfillmentEvent, Order, PaymentEvent
 from .orders import (
     OrderError,
     create_order,
+    enqueue_job,
     get_order,
     get_order_by_square_order_id,
     mark_paid_and_enqueue,
+    set_shipping_rate,
     set_square_checkout,
+    shipping_quote_is_fresh,
+    sync_square_pricing,
 )
 from .payments.square import SquareClient, verify_square_webhook
-from .schemas import CreateOrderIn, OrderOut
+from .refunds import apply_refund_status, get_refund_by_square_id
+from .schemas import CreateOrderIn, OrderOut, SelectShippingIn, ShippingRateOut
 from .settings import settings
 
 router = APIRouter(prefix="/api/v1", tags=["phase1"])
@@ -39,6 +44,13 @@ def _require_phase1() -> None:
         raise HTTPException(status_code=503, detail="Phase 1 API is disabled")
 
 
+def _get_order_or_404(session: Session, order_number: str) -> Order:
+    order = get_order(session, order_number)
+    if order is None:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return order
+
+
 def _order_out(order: Order, checkout_url: str | None = None) -> OrderOut:
     return OrderOut(
         order_number=order.order_number,
@@ -49,8 +61,11 @@ def _order_out(order: Order, checkout_url: str | None = None) -> OrderOut:
         subtotal_cents=order.subtotal_cents,
         discount_cents=order.discount_cents,
         shipping_cents=order.shipping_cents,
+        shipping_method=order.shipping_method,
         tax_cents=order.tax_cents,
         total_cents=order.total_cents,
+        refunded_cents=order.refunded_cents,
+        refund_state=order.refund_state,
         square_checkout_url=checkout_url or order.square_checkout_url,
     )
 
@@ -68,29 +83,87 @@ def api_create_order(data: CreateOrderIn, session: Session = Depends(db_session)
 @router.get("/orders/{order_number}", response_model=OrderOut)
 def api_get_order(order_number: str, session: Session = Depends(db_session)):
     _require_phase1()
-    order = get_order(session, order_number)
-    if order is None:
-        raise HTTPException(status_code=404, detail="Order not found")
+    return _order_out(_get_order_or_404(session, order_number))
+
+
+@router.get(
+    "/orders/{order_number}/shipping-rates",
+    response_model=list[ShippingRateOut],
+)
+def api_shipping_rates(order_number: str, session: Session = Depends(db_session)):
+    _require_phase1()
+    order = _get_order_or_404(session, order_number)
+    if order.square_payment_link_id:
+        raise HTTPException(status_code=409, detail="Checkout already created")
+
+    try:
+        rates = PrintfulClient().get_shipping_rates(order)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Unable to quote shipping") from exc
+
+    return [ShippingRateOut(**rate) for rate in rates]
+
+
+@router.post("/orders/{order_number}/shipping", response_model=OrderOut)
+def api_select_shipping(
+    order_number: str,
+    data: SelectShippingIn,
+    session: Session = Depends(db_session),
+):
+    _require_phase1()
+    order = _get_order_or_404(session, order_number)
+    if order.square_payment_link_id:
+        raise HTTPException(status_code=409, detail="Checkout already created")
+
+    try:
+        rates = PrintfulClient().get_shipping_rates(order)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Unable to quote shipping") from exc
+
+    selected = next((rate for rate in rates if rate["shipping"] == data.shipping), None)
+    if selected is None:
+        raise HTTPException(status_code=400, detail="Shipping method is not currently available")
+
+    try:
+        set_shipping_rate(
+            session,
+            order,
+            shipping_method=selected["shipping"],
+            shipping_cents=selected["rate_cents"],
+            currency=selected["currency"],
+        )
+    except OrderError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
     return _order_out(order)
 
 
 @router.post("/orders/{order_number}/square-checkout", response_model=OrderOut)
 def api_square_checkout(order_number: str, session: Session = Depends(db_session)):
     _require_phase1()
-    order = get_order(session, order_number)
-    if order is None:
-        raise HTTPException(status_code=404, detail="Order not found")
+    order = _get_order_or_404(session, order_number)
     if order.square_payment_link_id:
         return _order_out(order, order.square_checkout_url)
+    if not shipping_quote_is_fresh(order):
+        raise HTTPException(status_code=409, detail="Shipping quote is missing or expired")
 
-    payment_link = SquareClient().create_payment_link(order)
-    set_square_checkout(
-        session,
-        order,
-        payment_link_id=payment_link["id"],
-        square_order_id=payment_link["order_id"],
-        checkout_url=payment_link["url"],
-    )
+    client = SquareClient()
+    try:
+        payment_link = client.create_payment_link(order)
+        square_order = client.get_order(payment_link["order_id"])
+        sync_square_pricing(session, order, square_order)
+        set_square_checkout(
+            session,
+            order,
+            payment_link_id=payment_link["id"],
+            square_order_id=payment_link["order_id"],
+            checkout_url=payment_link["url"],
+        )
+    except OrderError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Unable to create Square checkout") from exc
+
     return _order_out(order, payment_link["url"])
 
 
@@ -116,7 +189,10 @@ async def square_webhook(request: Request, session: Session = Depends(db_session
     if existing:
         return {"ok": True, "duplicate": True}
 
-    payment = event.get("data", {}).get("object", {}).get("payment") or {}
+    obj = event.get("data", {}).get("object", {})
+    payment = obj.get("payment") or {}
+    refund_data = obj.get("refund") or {}
+    provider_payment_id = payment.get("id") or refund_data.get("payment_id")
     result = "IGNORED"
 
     if event_type in {"payment.created", "payment.updated"}:
@@ -128,6 +204,12 @@ async def square_webhook(request: Request, session: Session = Depends(db_session
         if square_order_id:
             order = get_order_by_square_order_id(session, square_order_id)
             if order is not None:
+                try:
+                    square_order = SquareClient().get_order(square_order_id)
+                    sync_square_pricing(session, order, square_order)
+                except OrderError as exc:
+                    raise HTTPException(status_code=409, detail=str(exc)) from exc
+
                 if amount_money.get("currency") != order.currency:
                     raise HTTPException(status_code=409, detail="Square currency mismatch")
                 if int(amount_money.get("amount", -1)) != order.total_cents:
@@ -144,6 +226,21 @@ async def square_webhook(request: Request, session: Session = Depends(db_session
                 else:
                     result = status or "PENDING"
 
+    elif event_type in {"refund.created", "refund.updated"}:
+        refund_id = refund_data.get("id")
+        if refund_id:
+            refund = get_refund_by_square_id(session, str(refund_id))
+            if refund is not None:
+                order = session.get(Order, refund.order_id)
+                if order is not None:
+                    apply_refund_status(
+                        session,
+                        refund,
+                        order,
+                        status=str(refund_data.get("status") or refund.status),
+                    )
+                    result = refund.status
+
     event_time = None
     if event.get("created_at"):
         try:
@@ -155,7 +252,7 @@ async def square_webhook(request: Request, session: Session = Depends(db_session
         PaymentEvent(
             provider="square",
             provider_event_id=event_id,
-            provider_payment_id=payment.get("id"),
+            provider_payment_id=provider_payment_id,
             event_type=event_type,
             event_time=event_time,
             payload_hash=hashlib.sha256(body).hexdigest(),
@@ -223,6 +320,7 @@ async def printful_webhook(request: Request, session: Session = Depends(db_sessi
             order.fulfillment_state = "SHIPPED"
             order.order_state = "SHIPPED"
             order.shipped_at = datetime.now(timezone.utc)
+            enqueue_job(session, order, "SEND_SHIPPING_NOTIFICATION")
             result = "SHIPPED"
         elif event_type == "shipment_delivered":
             order.fulfillment_state = "DELIVERED"

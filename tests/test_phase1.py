@@ -10,9 +10,16 @@ from sqlalchemy.orm import sessionmaker
 
 from app.db import Base
 from app.fulfillment.printful import PrintfulClient, verify_printful_webhook
-from app.models import Job, ProductVariant
-from app.orders import create_order, mark_paid_and_enqueue
+from app.jobs import process_email_job
+from app.models import Job, Order, ProductVariant, Refund
+from app.orders import (
+    create_order,
+    mark_paid_and_enqueue,
+    set_shipping_rate,
+    sync_square_pricing,
+)
 from app.payments.square import SquareClient, verify_square_webhook
+from app.refunds import request_refund
 from app.schemas import CreateOrderIn
 from app.settings import Settings
 
@@ -44,6 +51,12 @@ def config(**overrides):
         printful_webhook_secret_key="aa" * 32,
         printful_webhook_public_key=None,
         phase0_5_approved=False,
+        email_mode="console",
+        smtp_host=None,
+        smtp_port=587,
+        smtp_username=None,
+        smtp_password=None,
+        email_from=None,
     )
     data.update(overrides)
     return Settings(**data)
@@ -82,6 +95,44 @@ def seed_variant(session):
     return variant
 
 
+def select_test_shipping(session, order, cents=599):
+    set_shipping_rate(
+        session,
+        order,
+        shipping_method="STANDARD",
+        shipping_cents=cents,
+        currency="USD",
+    )
+
+
+def square_order_payload(order, tax_cents=300):
+    return {
+        "id": "SQORDER",
+        "reference_id": order.order_number,
+        "line_items": [
+            {
+                "name": item.name_snapshot,
+                "quantity": str(item.quantity),
+                "base_price_money": {
+                    "amount": item.unit_price_cents,
+                    "currency": order.currency,
+                },
+            }
+            for item in order.items
+        ],
+        "total_service_charge_money": {
+            "amount": order.shipping_cents,
+            "currency": order.currency,
+        },
+        "total_discount_money": {"amount": 0, "currency": order.currency},
+        "total_tax_money": {"amount": tax_cents, "currency": order.currency},
+        "total_money": {
+            "amount": order.subtotal_cents + order.shipping_cents + tax_cents,
+            "currency": order.currency,
+        },
+    }
+
+
 def test_order_snapshots_server_price(session):
     seed_variant(session)
     order = create_order(session, order_input())
@@ -97,10 +148,14 @@ def test_paid_transition_enqueues_once(session):
     order = create_order(session, order_input())
     assert mark_paid_and_enqueue(session, order, square_payment_id="PAY1") is True
     assert order.payment_state == "COMPLETED"
-    assert len(session.scalars(select(Job)).all()) == 1
+    jobs = session.scalars(select(Job)).all()
+    assert {job.job_type for job in jobs} == {
+        "SUBMIT_PRINTFUL_ORDER",
+        "SEND_ORDER_CONFIRMATION",
+    }
 
     assert mark_paid_and_enqueue(session, order, square_payment_id="PAY1") is False
-    assert len(session.scalars(select(Job)).all()) == 1
+    assert len(session.scalars(select(Job)).all()) == 2
 
 
 def test_square_signature():
@@ -114,9 +169,10 @@ def test_square_signature():
     assert not verify_square_webhook(body + b"x", expected, signature_key=key, notification_url=url)
 
 
-def test_square_payment_link_payload(session):
+def test_square_payment_link_payload_includes_shipping_and_auto_tax(session):
     seed_variant(session)
     order = create_order(session, order_input())
+    select_test_shipping(session, order)
     captured = {}
 
     def handler(request: httpx.Request):
@@ -131,32 +187,127 @@ def test_square_payment_link_payload(session):
     client = httpx.Client(transport=httpx.MockTransport(handler))
     link = SquareClient(config(), client=client).create_payment_link(order)
     assert link["id"] == "LINK"
-    assert captured["json"]["order"]["reference_id"] == order.order_number
-    assert captured["json"]["order"]["line_items"][0]["base_price_money"]["amount"] == 3200
-    assert captured["json"]["checkout_options"]["ask_for_shipping_address"] is True
+    payload = captured["json"]
+    assert payload["order"]["reference_id"] == order.order_number
+    assert payload["order"]["pricing_options"]["auto_apply_taxes"] is True
+    assert payload["order"]["line_items"][0]["base_price_money"]["amount"] == 3200
+    assert payload["checkout_options"]["shipping_fee"]["charge"]["amount"] == 599
+    assert payload["checkout_options"]["ask_for_shipping_address"] is False
+    fulfillment = payload["order"]["fulfillments"][0]
+    assert fulfillment["type"] == "SHIPMENT"
+    assert fulfillment["shipment_details"]["recipient"]["address"]["postal_code"] == "80202"
 
 
-def test_printful_draft_payload(session):
+def test_square_pricing_sync_accepts_square_tax(session):
     seed_variant(session)
     order = create_order(session, order_input())
-    captured = {}
+    select_test_shipping(session, order, 599)
+    sync_square_pricing(session, order, square_order_payload(order, tax_cents=511))
+    assert order.shipping_cents == 599
+    assert order.tax_cents == 511
+    assert order.total_cents == 7510
+
+
+def test_printful_shipping_rates_and_draft_payload(session):
+    seed_variant(session)
+    order = create_order(session, order_input())
+    requests = []
 
     def handler(request: httpx.Request):
-        captured["json"] = json.loads(request.content)
+        requests.append((request.url.path, json.loads(request.content)))
+        if request.url.path == "/v2/shipping-rates":
+            return httpx.Response(
+                200,
+                json={"data": [{
+                    "shipping": "STANDARD",
+                    "shipping_method_name": "Flat Rate",
+                    "rate": "5.99",
+                    "currency": "USD",
+                    "min_delivery_days": 4,
+                    "max_delivery_days": 7,
+                }]},
+            )
         return httpx.Response(
             200,
             json={"data": {"id": 777, "external_id": order.order_number, "status": "draft"}},
         )
 
     client = httpx.Client(transport=httpx.MockTransport(handler))
-    data = PrintfulClient(config(), client=client).create_draft_order(order)
+    pf = PrintfulClient(config(), client=client)
+    rates = pf.get_shipping_rates(order)
+    assert rates[0]["rate_cents"] == 599
+    set_shipping_rate(
+        session,
+        order,
+        shipping_method=rates[0]["shipping"],
+        shipping_cents=rates[0]["rate_cents"],
+        currency=rates[0]["currency"],
+    )
+
+    data = pf.create_draft_order(order)
     assert data["status"] == "draft"
-    assert captured["json"]["external_id"] == order.order_number
-    item = captured["json"]["order_items"][0]
+    draft_payload = requests[-1][1]
+    assert draft_payload["shipping"] == "STANDARD"
+    assert draft_payload["external_id"] == order.order_number
+    item = draft_payload["order_items"][0]
     assert item["source"] == "product"
     assert item["product_id"] == 1000
     assert item["variant_id"] == 4011
     assert item["quantity"] == 2
+
+
+def test_refund_service_records_completed_refund_and_email_job(session):
+    seed_variant(session)
+    order = create_order(session, order_input())
+    order.payment_state = "COMPLETED"
+    order.order_state = "PAID"
+    order.square_payment_id = "PAY1"
+    session.commit()
+
+    class RefundClient:
+        def refund_payment(self, **kwargs):
+            assert kwargs["payment_id"] == "PAY1"
+            assert kwargs["amount_cents"] == 1000
+            return {"id": "REF1", "status": "COMPLETED"}
+
+    refund = request_refund(
+        session,
+        order,
+        amount_cents=1000,
+        reason="Test refund",
+        client=RefundClient(),
+    )
+    assert refund.square_refund_id == "REF1"
+    assert order.refunded_cents == 1000
+    assert order.refund_state == "PARTIAL"
+    jobs = session.scalars(select(Job).where(Job.job_type.like("SEND_REFUND_CONFIRMATION:%"))).all()
+    assert len(jobs) == 1
+
+
+def test_email_job_dispatch(session):
+    seed_variant(session)
+    order = create_order(session, order_input())
+    job = Job(job_type="SEND_ORDER_CONFIRMATION", order_id=order.id, state="PENDING")
+    session.add(job)
+    session.commit()
+
+    class Sender:
+        called = False
+
+        def send_order_confirmation(self, received):
+            assert received.order_number == order.order_number
+            self.called = True
+
+        def send_shipping_notification(self, received):
+            raise AssertionError
+
+        def send_refund_confirmation(self, received):
+            raise AssertionError
+
+    sender = Sender()
+    process_email_job(session, job, config=config(), sender=sender)
+    assert sender.called is True
+    assert job.state == "COMPLETED"
 
 
 def test_printful_signature():
