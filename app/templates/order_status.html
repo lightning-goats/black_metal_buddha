@@ -12,6 +12,23 @@
     <p><strong>Total:</strong> {{ order.currency }} {{ '%.2f' | format(order.total_cents / 100) }}</p>
     <p class="microcopy">This page intentionally does not display the buyer's email or shipping address.</p>
   </div>
+
+  {% if order.shipments %}
+  <div class="shipment-list" aria-labelledby="shipments-heading">
+    <h2 id="shipments-heading">Shipments</h2>
+    {% for shipment in order.shipments %}
+    <article class="shipment-card">
+      <p><strong>Status:</strong> {{ shipment.status | replace('_', ' ') | title }}</p>
+      {% if shipment.tracking_number %}<p><strong>Tracking number:</strong> {{ shipment.tracking_number }}</p>{% endif %}
+      {% if shipment.tracking_url %}
+      <p><a class="text-link" href="{{ shipment.tracking_url }}" rel="noopener noreferrer">Track this shipment →</a></p>
+      {% endif %}
+      {% if shipment.reshipment %}<p class="microcopy">This is a replacement/reshipment.</p>{% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   <div class="actions">
     <a class="button button-ghost" href="/shop">Return to shop</a>
   </div>
