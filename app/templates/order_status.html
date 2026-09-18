@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero shell narrow">
+  <p class="eyebrow">ORDER {{ order.order_number }}</p>
+  <h1>{{ status_heading }}</h1>
+  <p>{{ status_message }}</p>
+</section>
+<section class="section shell narrow">
+  <div class="checkout-disabled">
+    <p><strong>Payment:</strong> {{ order.payment_state | replace('_', ' ') | title }}</p>
+    <p><strong>Fulfillment:</strong> {{ order.fulfillment_state | replace('_', ' ') | title }}</p>
+    <p><strong>Total:</strong> {{ order.currency }} {{ '%.2f' | format(order.total_cents / 100) }}</p>
+    <p class="microcopy">This page intentionally does not display the buyer's email or shipping address.</p>
+  </div>
+  <div class="actions">
+    <a class="button button-ghost" href="/shop">Return to shop</a>
+  </div>
+</section>
+{% endblock %}
