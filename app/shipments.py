@@ -42,10 +42,20 @@ def upsert_printful_shipment(
         )
         session.add(shipment)
 
-    shipment.status = str(shipment_data.get("status") or event_type).upper()
+    shipment.status = str(
+        shipment_data.get("status")
+        or shipment_data.get("shipment_status")
+        or shipment_data.get("delivery_status")
+        or event_type
+    ).upper()
     shipment.tracking_number = shipment_data.get("tracking_number") or shipment.tracking_number
     shipment.tracking_url = shipment_data.get("tracking_url") or shipment.tracking_url
-    shipment.reshipment = bool(shipment_data.get("reshipment", shipment.reshipment))
+    shipment.reshipment = bool(
+        shipment_data.get(
+            "reshipment",
+            shipment_data.get("is_reshipment", shipment.reshipment),
+        )
+    )
     shipment.shipped_at = _parse_time(shipment_data.get("shipped_at")) or shipment.shipped_at
     shipment.delivered_at = _parse_time(shipment_data.get("delivered_at")) or shipment.delivered_at
 
