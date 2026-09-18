@@ -20,6 +20,25 @@ def new_order_number() -> str:
     return f"BMB-{uuid4().hex[:12].upper()}"
 
 
+def recalculate_total(order: Order) -> None:
+    order.total_cents = (
+        order.subtotal_cents
+        - order.discount_cents
+        + order.shipping_cents
+        + order.tax_cents
+    )
+
+
+def enqueue_job(session: Session, order: Order, job_type: str) -> bool:
+    existing = session.scalar(
+        select(Job).where(Job.order_id == order.id, Job.job_type == job_type)
+    )
+    if existing is not None:
+        return False
+    session.add(Job(job_type=job_type, order_id=order.id, state="PENDING"))
+    return True
+
+
 def create_order(session: Session, data: CreateOrderIn) -> Order:
     order_id = str(uuid4())
     order_number = new_order_number()
@@ -65,14 +84,6 @@ def create_order(session: Session, data: CreateOrderIn) -> Order:
             )
         )
 
-    # Shipping/tax remain zero in this backend-foundation slice.
-    # Public checkout must not be enabled until server-side shipping/tax
-    # calculation is implemented and validated.
-    shipping_cents = 0
-    tax_cents = 0
-    discount_cents = 0
-    total = subtotal - discount_cents + shipping_cents + tax_cents
-
     order = Order(
         id=order_id,
         order_number=order_number,
@@ -87,10 +98,10 @@ def create_order(session: Session, data: CreateOrderIn) -> Order:
         ship_country=data.recipient.country_code.upper(),
         currency=currency or "USD",
         subtotal_cents=subtotal,
-        discount_cents=discount_cents,
-        shipping_cents=shipping_cents,
-        tax_cents=tax_cents,
-        total_cents=total,
+        discount_cents=0,
+        shipping_cents=0,
+        tax_cents=0,
+        total_cents=subtotal,
         printful_external_id=order_number,
         items=items,
     )
@@ -106,6 +117,87 @@ def get_order(session: Session, order_number: str) -> Order | None:
 
 def get_order_by_square_order_id(session: Session, square_order_id: str) -> Order | None:
     return session.scalar(select(Order).where(Order.square_order_id == square_order_id))
+
+
+def set_shipping_rate(
+    session: Session,
+    order: Order,
+    *,
+    shipping_method: str,
+    shipping_cents: int,
+    currency: str,
+) -> None:
+    if order.square_payment_link_id:
+        raise OrderError("Shipping cannot change after Square checkout is created")
+    if currency != order.currency:
+        raise OrderError("Shipping quote currency mismatch")
+    if shipping_cents < 0:
+        raise OrderError("Shipping cannot be negative")
+    order.shipping_method = shipping_method
+    order.shipping_cents = shipping_cents
+    order.shipping_quoted_at = datetime.now(timezone.utc)
+    recalculate_total(order)
+    session.commit()
+
+
+def sync_square_pricing(
+    session: Session,
+    order: Order,
+    square_order: dict,
+) -> None:
+    if square_order.get("reference_id") != order.order_number:
+        raise OrderError("Square order reference mismatch")
+
+    line_items = square_order.get("line_items") or []
+    if len(line_items) != len(order.items):
+        raise OrderError("Square line-item count mismatch")
+
+    expected_lines = sorted(
+        (item.name_snapshot, str(item.quantity), item.unit_price_cents)
+        for item in order.items
+    )
+    actual_lines = sorted(
+        (
+            str(line.get("name") or ""),
+            str(line.get("quantity") or ""),
+            int((line.get("base_price_money") or {}).get("amount", -1)),
+        )
+        for line in line_items
+    )
+    if expected_lines != actual_lines:
+        raise OrderError("Square line-item pricing mismatch")
+
+    total_service = square_order.get("total_service_charge_money") or {}
+    if int(total_service.get("amount", 0)) != order.shipping_cents:
+        raise OrderError("Square shipping/service-charge mismatch")
+    if total_service and total_service.get("currency") not in {None, order.currency}:
+        raise OrderError("Square shipping currency mismatch")
+
+    total_discount = square_order.get("total_discount_money") or {}
+    if int(total_discount.get("amount", 0)) != order.discount_cents:
+        raise OrderError("Square discount mismatch")
+
+    tax_money = square_order.get("total_tax_money") or {}
+    total_money = square_order.get("total_money") or {}
+    if tax_money.get("currency") not in {None, order.currency}:
+        raise OrderError("Square tax currency mismatch")
+    if total_money.get("currency") != order.currency:
+        raise OrderError("Square total currency mismatch")
+
+    tax_cents = int(tax_money.get("amount", 0))
+    total_cents = int(total_money.get("amount", -1))
+    expected_total = (
+        order.subtotal_cents
+        - order.discount_cents
+        + order.shipping_cents
+        + tax_cents
+    )
+    if total_cents != expected_total:
+        raise OrderError("Square calculated total is inconsistent")
+
+    order.tax_cents = tax_cents
+    order.total_cents = total_cents
+    session.commit()
 
 
 def set_square_checkout(
@@ -137,7 +229,8 @@ def mark_paid_and_enqueue(
     order.order_state = "PAID"
     order.square_payment_id = square_payment_id
     order.paid_at = datetime.now(timezone.utc)
-    session.add(Job(job_type="SUBMIT_PRINTFUL_ORDER", order_id=order.id, state="PENDING"))
+    enqueue_job(session, order, "SUBMIT_PRINTFUL_ORDER")
+    enqueue_job(session, order, "SEND_ORDER_CONFIRMATION")
 
     try:
         session.commit()
