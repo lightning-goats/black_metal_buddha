@@ -1,20 +1,30 @@
 # Phase 0 Storefront
 
-This implementation makes Black Metal Buddha publishable as a pre-launch catalog site while intentionally keeping checkout disabled.
+Phase 0 makes Black Metal Buddha publishable as a pre-launch catalog while intentionally keeping checkout disabled.
+
+## Status
+
+The application is implemented and the final approved Black Metal Buddha logo is integrated.
+
+The remaining Phase 0 work is operational deployment to the VPS, DNS/TLS activation, and public smoke testing.
 
 ## Included
 
 - FastAPI + Jinja2 server-rendered storefront
 - home, shop, product, about, FAQ, cart, shipping/returns, privacy
+- approved Black Metal Buddha logo at `/static/brand/black-metal-buddha-logo.webp`
 - existing shirt mockups served directly from `black_metal_buddhist_prints/05_original_mockups`
 - localStorage preview cart (no customer data sent to the server)
 - human-readable UI typography with black/bone/red visual system
 - responsive layout
-- canonical metadata, OpenGraph basics, Organization/Product JSON-LD
-- `robots.txt` and XML sitemap
+- canonical metadata, OpenGraph metadata, Organization/WebSite/Product JSON-LD
+- robots.txt and XML sitemap
+- branded noindex 404 page
+- security headers with CSP nonce
 - `/healthz`
-- pytest smoke tests
-- systemd and Nginx deployment examples
+- pytest smoke/security tests
+- systemd and Nginx deployment configuration
+- public deployment smoke-test script
 - checkout visibly disabled pending Phase 1
 
 ## Local run
@@ -33,8 +43,16 @@ PUBLIC_BASE_URL=http://127.0.0.1:8088 uvicorn app.main:app --reload --port 8088
 pytest
 ```
 
-## Production notes
+## Production deployment
 
-The Nginx file deliberately omits certificate paths because the VPS already has its own certificate workflow. Add the existing certificate directives before enabling the vhost.
+See:
 
-Do not enable checkout in Phase 0. Square and Printful credentials are intentionally absent from this implementation.
+- `deploy/README.md`
+- `docs/15_PUBLISHING_CHECKLIST.md`
+- `deploy/smoke-test.sh`
+
+## Phase boundary
+
+Do not enable checkout in Phase 0.
+
+Square payment handling, the order database, and automated Printful fulfillment belong to Phase 1. Lightning remains deferred until Square exposes the required automated Lightning-to-fiat API flow.
