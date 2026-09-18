@@ -396,7 +396,7 @@ def catalog(
             variants=variants,
             products=PRODUCT_BY_SLUG,
             token_new=csrf_token("create_variant", "new"),
-            token_edit={str(item.id): csrf_token("edit_variant", str(item.id)) for item in variants},
+            token_edit={item.id: csrf_token("edit_variant", str(item.id)) for item in variants},
             message=request.query_params.get("message"),
         ),
     )
