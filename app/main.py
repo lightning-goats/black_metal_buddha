@@ -13,7 +13,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .api_phase1 import router as phase1_router
 from .catalog import PRODUCT_BY_SLUG, PRODUCTS
-from .db import init_db
+from .db import SessionLocal, init_db
+from .orders import get_order
 from .settings import settings as phase1_settings
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -231,6 +232,48 @@ def cart(request: Request):
             robots="noindex,nofollow",
         ),
     )
+
+
+@app.get("/orders/{order_number}", include_in_schema=False)
+def order_status(request: Request, order_number: str):
+    if not phase1_settings.phase1_api_enabled:
+        raise HTTPException(status_code=404, detail="Order status unavailable")
+
+    with SessionLocal() as session:
+        order = get_order(session, order_number)
+        if order is None:
+            raise HTTPException(status_code=404, detail="Order not found")
+
+        if order.order_state == "PAID":
+            heading = "Payment received."
+            message = "Your payment is confirmed. Fulfillment is queued."
+        elif order.order_state in {"FULFILLMENT_SUBMITTED", "IN_PRODUCTION"}:
+            heading = "Your order is being prepared."
+            message = "Payment is confirmed and fulfillment is in progress."
+        elif order.order_state == "SHIPPED":
+            heading = "Your order has shipped."
+            message = "Shipment information will be added as the fulfillment integration is completed."
+        elif order.order_state == "PAYMENT_FAILED":
+            heading = "Payment was not completed."
+            message = "No fulfillment will occur for this order."
+        else:
+            heading = "Payment pending."
+            message = "If you just completed Square checkout, this page will update after payment confirmation."
+
+        return templates.TemplateResponse(
+            request,
+            "order_status.html",
+            page_context(
+                request,
+                order=order,
+                status_heading=heading,
+                status_message=message,
+                title=f"Order {order.order_number} | Black Metal Buddha",
+                description="Black Metal Buddha order status.",
+                canonical=f"{BASE_URL}/orders/{order.order_number}",
+                robots="noindex,nofollow",
+            ),
+        )
 
 
 @app.get("/shipping-returns", include_in_schema=False)
