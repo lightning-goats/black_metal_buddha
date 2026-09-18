@@ -6,9 +6,10 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .fulfillment.printful import PrintfulClient
-from .models import Order
+from .models import Order, Refund
 from .orders import mark_paid_and_enqueue, sync_square_pricing
 from .payments.square import SquareClient
+from .refunds import apply_refund_status
 
 
 class ReconciliationError(RuntimeError):
@@ -108,6 +109,8 @@ def reconcile_orders(
     counts = {
         "square_checked": 0,
         "square_errors": 0,
+        "refunds_checked": 0,
+        "refund_errors": 0,
         "printful_checked": 0,
         "printful_errors": 0,
     }
@@ -124,6 +127,27 @@ def reconcile_orders(
             except Exception:
                 session.rollback()
                 counts["square_errors"] += 1
+
+        if square_client is not None:
+            refunds = session.scalars(
+                select(Refund).where(
+                    Refund.order_id == order.id,
+                    Refund.status.not_in(["COMPLETED", "FAILED"]),
+                )
+            ).all()
+            for refund in refunds:
+                try:
+                    data = square_client.get_refund(refund.square_refund_id)
+                    apply_refund_status(
+                        session,
+                        refund,
+                        order,
+                        status=str(data.get("status") or refund.status),
+                    )
+                    counts["refunds_checked"] += 1
+                except Exception:
+                    session.rollback()
+                    counts["refund_errors"] += 1
 
         if (
             printful_client is not None
