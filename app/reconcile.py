@@ -10,6 +10,7 @@ from .models import Order, Refund
 from .orders import mark_paid_and_enqueue, sync_square_pricing
 from .payments.square import SquareClient
 from .refunds import apply_refund_status
+from .shipments import upsert_printful_shipment
 
 
 class ReconciliationError(RuntimeError):
@@ -85,9 +86,18 @@ def reconcile_printful_order(
         order.order_state = "FULFILLMENT_FAILED"
     elif status == "CANCELED":
         order.fulfillment_state = "CANCELED"
-    elif status in {"PENDING", "INREVIEW"}:
+    elif status == "ONHOLD":
+        order.fulfillment_state = "HOLD"
+        order.order_state = "FULFILLMENT_HOLD"
+    elif status in {"PENDING", "INREVIEW", "INPROCESS"}:
         order.fulfillment_state = status
         order.order_state = "IN_PRODUCTION"
+    elif status == "PARTIAL":
+        order.fulfillment_state = "PARTIAL"
+        order.order_state = "PARTIALLY_SHIPPED"
+    elif status == "FULFILLED":
+        order.fulfillment_state = "FULFILLED"
+        order.order_state = "SHIPPED"
     elif status == "DRAFT":
         order.fulfillment_state = "DRAFT"
         if order.order_state == "PAID":
@@ -96,6 +106,26 @@ def reconcile_printful_order(
         order.fulfillment_state = status or order.fulfillment_state
 
     session.commit()
+
+    for shipment_data in client.get_shipments(f"@{order.order_number}"):
+        delivery_status = str(shipment_data.get("delivery_status") or "").lower()
+        shipment_status = str(shipment_data.get("shipment_status") or "").lower()
+        if shipment_data.get("delivered_at") or delivery_status == "delivered":
+            event_type = "shipment_delivered"
+        elif shipment_status == "returned":
+            event_type = "shipment_returned"
+        elif shipment_data.get("shipped_at"):
+            event_type = "shipment_sent"
+        else:
+            event_type = "shipment_reconciled"
+        upsert_printful_shipment(
+            session,
+            order,
+            shipment_data,
+            event_type=event_type,
+            printful_order_status=status,
+        )
+
     return status or "UNKNOWN"
 
 
