@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 
 from sqlalchemy import select
 
@@ -8,6 +9,7 @@ from .catalog import PRODUCT_BY_SLUG
 from .db import SessionLocal
 from .fulfillment.printful import PrintfulClient
 from .models import Order, ProductVariant
+from .ops import build_attention_report
 from .orders import (
     create_order,
     set_shipping_rate,
@@ -171,6 +173,22 @@ def refund_order(args: argparse.Namespace) -> None:
         )
 
 
+
+def ops_report(args: argparse.Namespace) -> None:
+    with SessionLocal() as session:
+        report = build_attention_report(session)
+    if args.json:
+        print(json.dumps(report, indent=2, sort_keys=True))
+    else:
+        counts = report["counts"]
+        print(f"Attention items: {counts['attention_total']}")
+        for issue in report["issues"]:
+            print(issue["kind"], issue["order_number"], issue["detail"])
+
+    if args.fail_on_attention and report["counts"]["attention_total"]:
+        raise SystemExit(2)
+
+
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Black Metal Buddha backend management")
     sub = p.add_subparsers(dest="command", required=True)
@@ -211,6 +229,11 @@ def parser() -> argparse.ArgumentParser:
     refund.add_argument("--amount-cents", type=int)
     refund.add_argument("--reason", default="Customer refund")
     refund.set_defaults(func=refund_order)
+
+    ops = sub.add_parser("ops-report")
+    ops.add_argument("--json", action="store_true")
+    ops.add_argument("--fail-on-attention", action="store_true")
+    ops.set_defaults(func=ops_report)
 
     return p
 
