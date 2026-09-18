@@ -115,6 +115,7 @@ def test_production_checkout_requires_all_gates():
         production_checkout_enabled=True,
         production_canary_approved=False,
         production_catalog_approved=True,
+        production_catalog_fingerprint="a" * 64,
         phase0_5_approved=True,
         square_environment="production",
         square_access_token="sq",
