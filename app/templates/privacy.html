@@ -3,10 +3,44 @@
 <section class="page-hero shell narrow">
   <p class="eyebrow">PRIVACY</p>
   <h1>Minimal data by design.</h1>
-  <p>The Phase 0 storefront does not process payments or collect customer shipping information. The preview cart is stored locally in your browser.</p>
+  <p>Black Metal Buddha collects only the information needed to take, fulfill, support, and account for an order.</p>
 </section>
 <section class="section shell prose-grid">
-  <article><h2>Phase 0</h2><p>No account is required. No payment information is collected. Cart selections remain in browser local storage.</p></article>
-  <article><h2>Phase 1</h2><p>Before payments launch, this notice will be updated to describe Square payment processing, Printful fulfillment, required shipping data, retention, and customer rights.</p></article>
+  <article>
+    <h2>What we collect</h2>
+    <p>For a purchase we process your name, email address, optional phone number, shipping address, products ordered, order totals, provider transaction identifiers, fulfillment state, and shipment/tracking information.</p>
+  </article>
+  <article>
+    <h2>Payments</h2>
+    <p>Payment is completed on Square's hosted checkout. Black Metal Buddha does not receive or store your full card number or CVV. We retain Square order/payment identifiers and payment status so we can reconcile purchases and refunds.</p>
+  </article>
+  <article>
+    <h2>Fulfillment</h2>
+    <p>We send the recipient and order information needed for production and shipping to Printful. Printful and its shipping providers process that information to manufacture and deliver the order.</p>
+  </article>
+  <article>
+    <h2>Browser storage</h2>
+    <p>The cart uses your browser's local storage. Shipping form data is not placed in local storage by the Black Metal Buddha application. The active order number may briefly be kept in session storage during the redirect to Square.</p>
+  </article>
+  <article>
+    <h2>Retention</h2>
+    <p>Order, payment-status, refund, and accounting records may be retained as needed to operate the store, resolve disputes, prevent duplicate fulfillment, and meet tax or legal obligations. We aim not to retain personal information that no longer serves an operational or legal purpose.</p>
+  </article>
+  <article>
+    <h2>Advertising and sale of data</h2>
+    <p>Black Metal Buddha does not sell customer personal information. The current storefront does not use advertising trackers. If that changes, this notice will be updated before those tools are enabled.</p>
+  </article>
+  <article>
+    <h2>Security</h2>
+    <p>The site uses HTTPS, server-side price verification, signed provider webhooks, restricted admin access, and a minimal payment-data boundary. No internet service can guarantee absolute security.</p>
+  </article>
+  <article>
+    <h2>Your questions</h2>
+    {% if support_email %}
+      <p>For privacy or order-support questions, email <a href="mailto:{{ support_email }}">{{ support_email }}</a>.</p>
+    {% else %}
+      <p>A customer privacy/support contact will be published before transactional launch.</p>
+    {% endif %}
+  </article>
 </section>
 {% endblock %}
