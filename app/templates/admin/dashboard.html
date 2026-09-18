@@ -1,0 +1,56 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<section class="admin-page-head">
+  <div><p class="eyebrow">OPERATIONS</p><h1>Dashboard</h1></div>
+  <a class="button button-ghost" href="/admin/orders">View all orders</a>
+</section>
+
+<div class="admin-stats">
+  <div><strong>{{ report.counts.attention_total }}</strong><span>Needs attention</span></div>
+  <div><strong>{{ recent_orders | length }}</strong><span>Recent orders shown</span></div>
+  <div><strong>{{ sellable_count }}</strong><span>Sellable variants</span></div>
+  <div><strong>{{ variant_count }}</strong><span>Total variants</span></div>
+</div>
+
+<section class="admin-panel">
+  <div class="admin-panel-head"><h2>Attention</h2></div>
+  {% if report.issues %}
+    <div class="admin-table-wrap"><table class="admin-table">
+      <thead><tr><th>Kind</th><th>Order</th><th>Detail</th></tr></thead>
+      <tbody>{% for issue in report.issues %}
+        <tr><td>{{ issue.kind }}</td><td><a href="/admin/orders/{{ issue.order_number }}">{{ issue.order_number }}</a></td><td>{{ issue.detail }}</td></tr>
+      {% endfor %}</tbody>
+    </table></div>
+  {% else %}<p class="muted">No current attention items.</p>{% endif %}
+</section>
+
+<section class="admin-panel">
+  <div class="admin-panel-head"><h2>Recent orders</h2></div>
+  {% if recent_orders %}
+  <div class="admin-table-wrap"><table class="admin-table">
+    <thead><tr><th>Order</th><th>Created</th><th>Payment</th><th>Fulfillment</th><th>Total</th></tr></thead>
+    <tbody>{% for order in recent_orders %}
+      <tr>
+        <td><a href="/admin/orders/{{ order.order_number }}">{{ order.order_number }}</a></td>
+        <td>{{ order.created_at }}</td>
+        <td>{{ order.payment_state }}</td>
+        <td>{{ order.fulfillment_state }}</td>
+        <td>{{ order.currency }} {{ '%.2f' | format(order.total_cents / 100) }}</td>
+      </tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="muted">No orders yet.</p>{% endif %}
+</section>
+
+<section class="admin-panel">
+  <h2>Launch gates</h2>
+  <div class="gate-grid">
+    <div class="{{ 'gate-on' if settings.phase0_5_approved else 'gate-off' }}">Sample approval: {{ settings.phase0_5_approved }}</div>
+    <div class="{{ 'gate-on' if settings.production_catalog_approved else 'gate-off' }}">Catalog approval: {{ settings.production_catalog_approved }}</div>
+    <div class="{{ 'gate-on' if settings.production_canary_approved else 'gate-off' }}">Canary approval: {{ settings.production_canary_approved }}</div>
+    <div class="{{ 'gate-on' if settings.production_checkout_enabled else 'gate-off' }}">Production checkout: {{ settings.production_checkout_enabled }}</div>
+    <div class="{{ 'gate-on' if settings.printful_confirm_enabled else 'gate-off' }}">Printful confirmation: {{ settings.printful_confirm_enabled }}</div>
+    <div class="{{ 'gate-on' if settings.phase1_api_enabled else 'gate-off' }}">Public Phase 1 API/UI: {{ settings.phase1_api_enabled }}</div>
+  </div>
+</section>
+{% endblock %}
