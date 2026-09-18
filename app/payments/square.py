@@ -47,7 +47,6 @@ class SquareClient:
 
         pre_populated_data = {
             "buyer_email": order.email,
-            "buyer_address": buyer_address,
         }
         if order.phone:
             pre_populated_data["buyer_phone_number"] = order.phone
