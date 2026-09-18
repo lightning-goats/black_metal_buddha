@@ -25,8 +25,9 @@ from .orders import (
 )
 from .payments.square import SquareClient, verify_square_webhook
 from .refunds import apply_refund_status, get_refund_by_square_id
-from .schemas import CreateOrderIn, OrderOut, SelectShippingIn, ShippingRateOut
+from .schemas import CatalogVariantOut, CreateOrderIn, OrderOut, SelectShippingIn, ShippingRateOut
 from .settings import settings
+from .storefront import sellable_catalog
 from .shipments import upsert_printful_shipment
 
 router = APIRouter(prefix="/api/v1", tags=["phase1"])
@@ -69,6 +70,23 @@ def _order_out(order: Order, checkout_url: str | None = None) -> OrderOut:
         refund_state=order.refund_state,
         square_checkout_url=checkout_url or order.square_checkout_url,
     )
+
+
+@router.get("/catalog", response_model=list[CatalogVariantOut])
+def api_catalog(session: Session = Depends(db_session)):
+    _require_phase1()
+    return [
+        CatalogVariantOut(
+            sku=item.sku,
+            product_slug=item.product_slug,
+            product_name=item.product_name,
+            size=item.size,
+            color=item.color,
+            currency=item.currency,
+            retail_price_cents=item.retail_price_cents,
+        )
+        for item in sellable_catalog(session)
+    ]
 
 
 @router.post("/orders", response_model=OrderOut)
