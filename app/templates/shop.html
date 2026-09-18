@@ -3,7 +3,11 @@
 <section class="page-hero shell">
   <p class="eyebrow">THE COLLECTION</p>
   <h1>Black Metal Buddhist Apparel</h1>
-  <p>Three initial designs are in sample validation. Browse the art now; purchasing will open after physical print approval and Square checkout goes live.</p>
+  {% if phase1_enabled and price_floors %}
+    <p>Choose a design, size, and quantity. Checkout is handled securely through Square.</p>
+  {% else %}
+    <p>Three initial designs are in sample validation. Browse the art now; purchasing will open after physical print approval and final launch checks.</p>
+  {% endif %}
 </section>
 <section class="section shell">
   <div class="product-grid">
