@@ -54,7 +54,7 @@ class SquareClient:
 
         checkout_options: dict[str, Any] = {
             "redirect_url": f"{self.config.public_base_url}/orders/{order.order_number}",
-            "ask_for_shipping_address": True,
+            "ask_for_shipping_address": False,
             "allow_tipping": False,
         }
         if order.shipping_cents:
@@ -75,6 +75,19 @@ class SquareClient:
                 "pricing_options": {
                     "auto_apply_taxes": True,
                 },
+                "fulfillments": [
+                    {
+                        "type": "SHIPMENT",
+                        "shipment_details": {
+                            "recipient": {
+                                "display_name": order.customer_name,
+                                "email_address": order.email,
+                                **({"phone_number": order.phone} if order.phone else {}),
+                                "address": buyer_address,
+                            }
+                        },
+                    }
+                ],
                 "line_items": [
                     {
                         "name": item.name_snapshot,
