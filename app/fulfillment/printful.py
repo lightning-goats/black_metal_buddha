@@ -15,6 +15,10 @@ class PrintfulConfigurationError(RuntimeError):
     pass
 
 
+class PrintfulCostGuardError(RuntimeError):
+    pass
+
+
 def money_to_cents(value: str | int | float | Decimal) -> int:
     return int((Decimal(str(value)) * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
@@ -99,6 +103,19 @@ class PrintfulClient:
             )
         return rates
 
+    def confirm_order(self, order_id_or_external_id: str) -> dict[str, Any]:
+        if self.config.printful_mode != "production":
+            raise PrintfulConfigurationError("Printful confirmation requires production mode")
+        if not self.config.phase0_5_approved or not self.config.printful_confirm_enabled:
+            raise PrintfulConfigurationError("Printful confirmation gates are not satisfied")
+
+        response = self.client.post(
+            f"{self.API_BASE}/v2/orders/{order_id_or_external_id}/confirmation",
+            headers=self._headers(),
+        )
+        response.raise_for_status()
+        return response.json().get("data") or {}
+
     def get_shipments(self, order_id_or_external_id: str) -> list[dict[str, Any]]:
         response = self.client.get(
             f"{self.API_BASE}/v2/orders/{order_id_or_external_id}/shipments",
@@ -121,10 +138,6 @@ class PrintfulClient:
     def create_draft_order(self, order: Order) -> dict[str, Any]:
         if self.config.printful_mode == "disabled":
             raise PrintfulConfigurationError("Printful integration is disabled")
-        if self.config.printful_mode == "production":
-            raise PrintfulConfigurationError(
-                "Backend foundation never confirms production orders directly"
-            )
         if not order.shipping_method:
             raise PrintfulConfigurationError("Shipping method has not been selected")
 
@@ -159,3 +172,12 @@ def verify_printful_webhook(
         return False
     expected = hmac.new(secret, body, hashlib.sha256).hexdigest()
     return hmac.compare_digest(expected, signature)
+
+
+def extract_printful_costs(data: dict[str, Any]) -> tuple[str, str | None, int | None]:
+    costs = data.get("costs") or {}
+    status = str(costs.get("calculation_status") or "").lower()
+    currency = costs.get("currency")
+    total = costs.get("total")
+    cents = money_to_cents(total) if total is not None else None
+    return status, str(currency) if currency else None, cents
