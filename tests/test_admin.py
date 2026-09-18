@@ -166,6 +166,7 @@ def test_production_checkout_can_pass_only_when_every_gate_is_explicit():
         app_secret_key="secret",
         admin_username="owner",
         admin_password="password",
+        support_email="support@example.com",
     )
     cfg.validate_safety()
 
