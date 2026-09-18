@@ -3,7 +3,7 @@ from __future__ import annotations
 import smtplib
 from email.message import EmailMessage
 
-from ..models import Order
+from ..models import Order, Shipment
 from ..settings import Settings, settings
 
 
@@ -55,9 +55,16 @@ class EmailSender:
             body=body,
         )
 
-    def send_shipping_notification(self, order: Order) -> None:
+    def send_shipping_notification(self, order: Order, shipment: Shipment) -> None:
+        tracking = ""
+        if shipment.tracking_number:
+            tracking += f"Tracking number: {shipment.tracking_number}\n"
+        if shipment.tracking_url:
+            tracking += f"Tracking: {shipment.tracking_url}\n"
+
         body = (
-            f"Your Black Metal Buddha order {order.order_number} has shipped.\n\n"
+            f"A shipment for Black Metal Buddha order {order.order_number} is on the way.\n\n"
+            f"{tracking}"
             f"Order status: {self.config.public_base_url}/orders/{order.order_number}\n"
         )
         self._send(
