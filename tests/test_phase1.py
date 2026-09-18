@@ -192,7 +192,10 @@ def test_square_payment_link_payload_includes_shipping_and_auto_tax(session):
     assert payload["order"]["pricing_options"]["auto_apply_taxes"] is True
     assert payload["order"]["line_items"][0]["base_price_money"]["amount"] == 3200
     assert payload["checkout_options"]["shipping_fee"]["charge"]["amount"] == 599
-    assert payload["checkout_options"]["ask_for_shipping_address"] is True
+    assert payload["checkout_options"]["ask_for_shipping_address"] is False
+    fulfillment = payload["order"]["fulfillments"][0]
+    assert fulfillment["type"] == "SHIPMENT"
+    assert fulfillment["shipment_details"]["recipient"]["address"]["postal_code"] == "80202"
 
 
 def test_square_pricing_sync_accepts_square_tax(session):
