@@ -81,3 +81,12 @@ def sellable_catalog(session: Session) -> list[StorefrontVariant]:
     for product_slug in PRODUCT_BY_SLUG:
         result.extend(sellable_variants_for_product(session, product_slug))
     return result
+
+
+def price_floor_by_product(session: Session) -> dict[str, int]:
+    floors: dict[str, int] = {}
+    for item in sellable_catalog(session):
+        current = floors.get(item.product_slug)
+        if current is None or item.retail_price_cents < current:
+            floors[item.product_slug] = item.retail_price_cents
+    return floors
