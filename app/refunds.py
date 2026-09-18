@@ -71,17 +71,18 @@ def request_refund(
         idempotency_key=idempotency_key,
     )
 
+    final_status = str(data["status"]).upper()
     refund = Refund(
         order_id=order.id,
         square_refund_id=str(data["id"]),
         amount_cents=amount,
         currency=order.currency,
-        status=str(data["status"]).upper(),
+        status="PENDING",
         reason=reason,
     )
     session.add(refund)
     session.flush()
-    apply_refund_status(session, refund, order, status=refund.status)
+    apply_refund_status(session, refund, order, status=final_status)
     return refund
 
 
