@@ -129,3 +129,8 @@ details p { color: var(--bone-dim); max-width: 70ch; }
   .footer-grid { grid-template-columns: 1fr; }
   .footer-bottom { flex-direction: column; }
 }
+
+.shipment-list { margin-top: 2rem; }
+.shipment-list h2 { font-size: 1.8rem; margin-bottom: 1rem; }
+.shipment-card { border: 1px solid var(--line); padding: 1.2rem; margin-bottom: .8rem; background: rgba(18,18,17,.72); }
+.shipment-card p { margin: .35rem 0; }
