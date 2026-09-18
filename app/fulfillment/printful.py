@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Any
 
 import httpx
@@ -12,6 +13,10 @@ from ..settings import Settings, settings
 
 class PrintfulConfigurationError(RuntimeError):
     pass
+
+
+def money_to_cents(value: str | int | float | Decimal) -> int:
+    return int((Decimal(str(value)) * Decimal("100")).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
 class PrintfulClient:
@@ -32,6 +37,68 @@ class PrintfulClient:
             headers["X-PF-Store-Id"] = self.config.printful_store_id
         return headers
 
+    @staticmethod
+    def _recipient(order: Order) -> dict[str, Any]:
+        recipient = {
+            "name": order.customer_name,
+            "email": order.email,
+            "address1": order.ship_address1,
+            "city": order.ship_city,
+            "state_name": order.ship_state,
+            "state_code": order.ship_state,
+            "country_code": order.ship_country,
+            "zip": order.ship_postal_code,
+        }
+        if order.phone:
+            recipient["phone"] = order.phone
+        if order.ship_address2:
+            recipient["address2"] = order.ship_address2
+        return recipient
+
+    @staticmethod
+    def _order_items(order: Order) -> list[dict[str, Any]]:
+        order_items = []
+        for item in order.items:
+            if not item.printful_product_id_snapshot or not item.printful_variant_id_snapshot:
+                raise PrintfulConfigurationError(f"Missing Printful mapping for {item.sku_snapshot}")
+            order_items.append(
+                {
+                    "source": "product",
+                    "product_id": int(item.printful_product_id_snapshot),
+                    "variant_id": int(item.printful_variant_id_snapshot),
+                    "quantity": item.quantity,
+                    "external_id": f"{order.order_number}-{item.id}",
+                }
+            )
+        return order_items
+
+    def get_shipping_rates(self, order: Order) -> list[dict[str, Any]]:
+        payload = {
+            "recipient": self._recipient(order),
+            "order_items": self._order_items(order),
+            "currency": order.currency,
+        }
+        response = self.client.post(
+            f"{self.API_BASE}/v2/shipping-rates",
+            headers=self._headers(),
+            json=payload,
+        )
+        response.raise_for_status()
+        data = response.json().get("data") or []
+        rates = []
+        for rate in data:
+            rates.append(
+                {
+                    "shipping": str(rate.get("shipping") or ""),
+                    "name": str(rate.get("shipping_method_name") or rate.get("shipping") or ""),
+                    "rate_cents": money_to_cents(rate.get("rate", "0")),
+                    "currency": str(rate.get("currency") or order.currency),
+                    "min_delivery_days": rate.get("min_delivery_days"),
+                    "max_delivery_days": rate.get("max_delivery_days"),
+                }
+            )
+        return rates
+
     def get_order_by_external_id(self, external_id: str) -> dict[str, Any] | None:
         response = self.client.get(
             f"{self.API_BASE}/v2/orders/@{external_id}",
@@ -49,36 +116,14 @@ class PrintfulClient:
             raise PrintfulConfigurationError(
                 "Backend foundation never confirms production orders directly"
             )
-
-        order_items = []
-        for item in order.items:
-            if not item.printful_product_id_snapshot or not item.printful_variant_id_snapshot:
-                raise PrintfulConfigurationError(f"Missing Printful mapping for {item.sku_snapshot}")
-            order_items.append(
-                {
-                    "source": "product",
-                    "product_id": int(item.printful_product_id_snapshot),
-                    "variant_id": int(item.printful_variant_id_snapshot),
-                    "quantity": item.quantity,
-                    "external_id": f"{order.order_number}-{item.id}",
-                }
-            )
+        if not order.shipping_method:
+            raise PrintfulConfigurationError("Shipping method has not been selected")
 
         payload = {
             "external_id": order.order_number,
-            "shipping": "STANDARD",
-            "recipient": {
-                "name": order.customer_name,
-                "email": order.email,
-                "phone": order.phone,
-                "address1": order.ship_address1,
-                "address2": order.ship_address2,
-                "city": order.ship_city,
-                "state_name": order.ship_state,
-                "country_code": order.ship_country,
-                "zip": order.ship_postal_code,
-            },
-            "order_items": order_items,
+            "shipping": order.shipping_method,
+            "recipient": self._recipient(order),
+            "order_items": self._order_items(order),
         }
 
         response = self.client.post(
