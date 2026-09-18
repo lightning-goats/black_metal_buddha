@@ -40,15 +40,16 @@ button, input { font: inherit; }
 .skip-link { position: absolute; left: -9999px; top: 0; background: var(--bone); color: #000; padding: .75rem 1rem; z-index: 99; }
 .skip-link:focus { left: 1rem; top: 1rem; }
 .site-header { position: sticky; top: 0; z-index: 50; background: rgba(9,9,9,.94); border-bottom: 1px solid var(--line); backdrop-filter: blur(14px); }
-.header-inner { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
+.header-inner { min-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
 .brand { text-decoration: none; display: inline-flex; align-items: center; gap: .8rem; }
-.brand-mark { color: var(--ritual-bright); font-size: 1.5rem; }
+.brand-logo { width: 58px; height: 58px; object-fit: cover; border-radius: 50%; }
 .brand-name, h1, h2, h3, .footer-brand { font-family: Georgia, "Times New Roman", serif; letter-spacing: .08em; }
 .brand-name { font-size: .92rem; font-weight: 800; }
 .primary-nav { display: flex; gap: 1.4rem; align-items: center; font-size: .88rem; text-transform: uppercase; letter-spacing: .12em; }
 .primary-nav a { text-decoration: none; }
 .cart-link { border-left: 1px solid var(--line); padding-left: 1.4rem; }
 .hero { min-height: 72vh; display: grid; grid-template-columns: 1.05fr .95fr; align-items: center; gap: clamp(2rem, 6vw, 5rem); padding-block: clamp(4rem, 8vw, 8rem); }
+.hero-logo { width: min(300px, 70vw); margin: 0 0 1.5rem; border-radius: 2px; box-shadow: 0 18px 60px rgba(0,0,0,.35); }
 .hero-copy h1, .page-hero h1 { font-size: clamp(3rem, 7vw, 6.8rem); line-height: .96; margin: .25rem 0 1.3rem; text-transform: uppercase; }
 .hero-lead, .page-hero > p:last-child { color: var(--bone-dim); font-size: clamp(1.05rem, 1.8vw, 1.35rem); max-width: 62ch; }
 .eyebrow { color: var(--ritual-bright); font-size: .76rem; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; }
@@ -104,6 +105,7 @@ details p { color: var(--bone-dim); max-width: 70ch; }
 .site-footer { border-top: 1px solid var(--line); padding-top: 3rem; margin-top: 3rem; background: #080808; }
 .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 2rem; }
 .footer-grid > div { display: flex; flex-direction: column; align-items: flex-start; gap: .35rem; }
+.footer-logo { width: 84px; height: 84px; object-fit: cover; border-radius: 50%; margin-bottom: .5rem; }
 .footer-brand, .footer-heading { margin: 0 0 .4rem; font-weight: 800; }
 .footer-heading { color: var(--ritual-bright); text-transform: uppercase; letter-spacing: .14em; font-size: .75rem; }
 .muted { color: var(--bone-dim); }
@@ -118,6 +120,7 @@ details p { color: var(--bone-dim); max-width: 70ch; }
 }
 @media (max-width: 560px) {
   .header-inner { display: block; }
+  .brand-logo { width: 48px; height: 48px; }
   .primary-nav { margin-top: .85rem; justify-content: flex-start; font-size: .76rem; }
   .cart-link { border-left: 0; padding-left: 0; }
   .hero { min-height: auto; padding-top: 3rem; }

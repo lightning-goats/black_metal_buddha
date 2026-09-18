@@ -7,13 +7,14 @@
   <meta name="description" content="{{ description or default_description }}">
   <meta name="robots" content="{{ robots or 'index,follow,max-image-preview:large' }}">
   <link rel="canonical" href="{{ canonical }}">
+  <link rel="icon" type="image/webp" href="/static/brand/black-metal-buddha-logo.webp">
   <meta name="theme-color" content="#090909">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="{{ site_name }}">
   <meta property="og:title" content="{{ title }}">
   <meta property="og:description" content="{{ description or default_description }}">
   <meta property="og:url" content="{{ canonical }}">
-  {% if product %}<meta property="og:image" content="{{ base_url }}{{ product.image }}">{% endif %}
+  <meta property="og:image" content="{{ base_url }}{% if product %}{{ product.image }}{% else %}/static/brand/black-metal-buddha-logo.webp{% endif %}">
   <meta name="twitter:card" content="summary_large_image">
   <link rel="stylesheet" href="/static/site.css">
   <script src="/static/cart.js" defer></script>
@@ -24,7 +25,7 @@
   <header class="site-header">
     <div class="shell header-inner">
       <a class="brand" href="/" aria-label="Black Metal Buddha home">
-        <span class="brand-mark" aria-hidden="true">☸</span>
+        <img class="brand-logo" src="/static/brand/black-metal-buddha-logo.webp" alt="" width="64" height="64">
         <span class="brand-name">BLACK METAL BUDDHA</span>
       </a>
       <nav class="primary-nav" aria-label="Primary navigation">
@@ -38,7 +39,11 @@
   <main id="main">{% block content %}{% endblock %}</main>
   <footer class="site-footer">
     <div class="shell footer-grid">
-      <div><p class="footer-brand">BLACK METAL BUDDHA</p><p class="muted">Ritual apparel for a fleeting world.</p></div>
+      <div>
+        <img class="footer-logo" src="/static/brand/black-metal-buddha-logo.webp" alt="" width="84" height="84">
+        <p class="footer-brand">BLACK METAL BUDDHA</p>
+        <p class="muted">Ritual apparel for a fleeting world.</p>
+      </div>
       <div><p class="footer-heading">Explore</p><a href="/shop">Shop</a><a href="/about">About</a><a href="/faq">FAQ</a></div>
       <div><p class="footer-heading">Information</p><a href="/shipping-returns">Shipping & Returns</a><a href="/privacy">Privacy</a></div>
     </div>

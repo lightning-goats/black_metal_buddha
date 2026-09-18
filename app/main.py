@@ -15,6 +15,7 @@ from .catalog import PRODUCT_BY_SLUG, PRODUCTS
 ROOT = Path(__file__).resolve().parents[1]
 BASE_URL = os.getenv("PUBLIC_BASE_URL", "https://blackmetalbuddha.com").rstrip("/")
 SITE_NAME = "Black Metal Buddha"
+LOGO_PATH = "/static/brand/black-metal-buddha-logo.webp"
 DEFAULT_DESCRIPTION = (
     "Black Metal Buddha creates dark ritual apparel inspired by impermanence, mortality, "
     "non-self, and contemplative Buddhist themes."
@@ -60,6 +61,7 @@ def page_context(request: Request, **kwargs):
         "request": request,
         "site_name": SITE_NAME,
         "base_url": BASE_URL,
+        "logo_path": LOGO_PATH,
         "default_description": DEFAULT_DESCRIPTION,
         "products": PRODUCTS,
         **kwargs,
@@ -78,6 +80,7 @@ def home(request: Request):
         "@type": "Organization",
         "name": SITE_NAME,
         "url": f"{BASE_URL}/",
+        "logo": f"{BASE_URL}{LOGO_PATH}",
         "description": DEFAULT_DESCRIPTION,
     }
     return templates.TemplateResponse(
