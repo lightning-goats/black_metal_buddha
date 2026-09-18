@@ -1,0 +1,14 @@
+{% extends "admin/base.html" %}
+{% block content %}
+<section class="admin-page-head"><div><p class="eyebrow">SECURITY & OPERATIONS</p><h1>Audit log</h1></div></section>
+<section class="admin-panel">
+  {% if entries %}
+  <div class="admin-table-wrap"><table class="admin-table">
+    <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Object</th><th>Details</th></tr></thead>
+    <tbody>{% for entry in entries %}
+      <tr><td>{{ entry.created_at }}</td><td>{{ entry.actor }}</td><td>{{ entry.action }}</td><td>{{ entry.object_type }} · {{ entry.object_id }}</td><td><code>{{ entry.details_json or '' }}</code></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="muted">No admin actions recorded.</p>{% endif %}
+</section>
+{% endblock %}
