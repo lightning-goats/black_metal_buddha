@@ -24,6 +24,7 @@ from .orders import (
     sync_square_pricing,
 )
 from .payments.square import SquareClient, verify_square_webhook
+from .rate_limit import limiter
 from .refunds import apply_refund_status, get_refund_by_square_id
 from .schemas import CatalogVariantOut, CreateOrderIn, OrderOut, SelectShippingIn, ShippingRateOut
 from .settings import settings
@@ -44,6 +45,34 @@ def db_session():
 def _require_phase1() -> None:
     if not settings.phase1_api_enabled:
         raise HTTPException(status_code=503, detail="Phase 1 API is disabled")
+
+
+def _client_identity(request: Request) -> str:
+    return request.client.host if request.client else "unknown"
+
+
+def _limit_customer_mutation(
+    request: Request,
+    *,
+    bucket: str,
+    limit: int = 30,
+    window_seconds: int = 600,
+) -> None:
+    if not limiter.allow(
+        bucket=bucket,
+        identity=_client_identity(request),
+        limit=limit,
+        window_seconds=window_seconds,
+    ):
+        raise HTTPException(
+            status_code=429,
+            detail="Too many checkout requests. Please wait and try again.",
+            headers={"Retry-After": str(window_seconds)},
+        )
+
+    origin = request.headers.get("origin")
+    if origin and origin.rstrip("/") != settings.public_base_url:
+        raise HTTPException(status_code=403, detail="Cross-origin checkout request rejected")
 
 
 def _get_order_or_404(session: Session, order_number: str) -> Order:
@@ -90,8 +119,13 @@ def api_catalog(session: Session = Depends(db_session)):
 
 
 @router.post("/orders", response_model=OrderOut)
-def api_create_order(data: CreateOrderIn, session: Session = Depends(db_session)):
+def api_create_order(
+    data: CreateOrderIn,
+    request: Request,
+    session: Session = Depends(db_session),
+):
     _require_phase1()
+    _limit_customer_mutation(request, bucket="create-order", limit=15)
     try:
         order = create_order(session, data)
     except OrderError as exc:
@@ -109,8 +143,13 @@ def api_get_order(order_number: str, session: Session = Depends(db_session)):
     "/orders/{order_number}/shipping-rates",
     response_model=list[ShippingRateOut],
 )
-def api_shipping_rates(order_number: str, session: Session = Depends(db_session)):
+def api_shipping_rates(
+    order_number: str,
+    request: Request,
+    session: Session = Depends(db_session),
+):
     _require_phase1()
+    _limit_customer_mutation(request, bucket="shipping-rates", limit=60)
     order = _get_order_or_404(session, order_number)
     if order.square_payment_link_id:
         raise HTTPException(status_code=409, detail="Checkout already created")
@@ -127,9 +166,11 @@ def api_shipping_rates(order_number: str, session: Session = Depends(db_session)
 def api_select_shipping(
     order_number: str,
     data: SelectShippingIn,
+    request: Request,
     session: Session = Depends(db_session),
 ):
     _require_phase1()
+    _limit_customer_mutation(request, bucket="select-shipping", limit=30)
     order = _get_order_or_404(session, order_number)
     if order.square_payment_link_id:
         raise HTTPException(status_code=409, detail="Checkout already created")
@@ -158,8 +199,13 @@ def api_select_shipping(
 
 
 @router.post("/orders/{order_number}/square-checkout", response_model=OrderOut)
-def api_square_checkout(order_number: str, session: Session = Depends(db_session)):
+def api_square_checkout(
+    order_number: str,
+    request: Request,
+    session: Session = Depends(db_session),
+):
     _require_phase1()
+    _limit_customer_mutation(request, bucket="square-checkout", limit=20)
     order = _get_order_or_404(session, order_number)
     if order.square_payment_link_id:
         return _order_out(order, order.square_checkout_url)
