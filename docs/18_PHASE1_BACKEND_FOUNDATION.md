@@ -88,3 +88,31 @@ alembic upgrade head
 ```
 
 Do not run the Phase 1 worker against production until its environment is intentionally configured.
+
+
+## Reconciliation and sandbox management
+
+A later Phase 1 increment adds provider reconciliation and a small management CLI.
+
+Examples:
+
+```bash
+# Development only: create a server-priced test SKU for Square Sandbox.
+python -m app.manage seed-sandbox-variant \
+  --product-slug lotus-of-the-void \
+  --sku TEST-LOTUS-BLK-M \
+  --size M \
+  --price-cents 3200
+
+# Inspect recent local order state.
+python -m app.manage list-orders
+
+# Reconcile known Square/Printful orders with provider state.
+python -m app.manage reconcile
+```
+
+Sandbox seeding is explicitly refused when `APP_ENV=production`.
+
+Square reconciliation retrieves the Square order and Payment, rechecks currency and exact amount, and can repair a missed payment webhook by transitioning the local order to PAID exactly once.
+
+Printful reconciliation always uses the BMB order number as the provider `external_id`.

@@ -89,6 +89,14 @@ class SquareClient:
             raise RuntimeError("Square response did not contain a complete payment link")
         return payment_link
 
+    def get_order(self, order_id: str) -> dict[str, Any]:
+        response = self.client.get(
+            f"{self.config.square_api_base}/v2/orders/{order_id}",
+            headers=self._headers(),
+        )
+        response.raise_for_status()
+        return response.json().get("order") or {}
+
     def get_payment(self, payment_id: str) -> dict[str, Any]:
         response = self.client.get(
             f"{self.config.square_api_base}/v2/payments/{payment_id}",
@@ -96,6 +104,14 @@ class SquareClient:
         )
         response.raise_for_status()
         return response.json().get("payment") or {}
+
+    @staticmethod
+    def payment_id_from_order(order: dict[str, Any]) -> str | None:
+        for tender in order.get("tenders") or []:
+            payment_id = tender.get("payment_id")
+            if payment_id:
+                return str(payment_id)
+        return None
 
 
 def verify_square_webhook(
