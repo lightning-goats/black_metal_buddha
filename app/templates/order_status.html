@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="page-hero shell narrow">
+<section class="page-hero shell narrow"{% if order.payment_state == "COMPLETED" %} data-order-complete data-order-number="{{ order.order_number }}"{% endif %}>
   <p class="eyebrow">ORDER {{ order.order_number }}</p>
   <h1>{{ status_heading }}</h1>
   <p>{{ status_message }}</p>
@@ -33,4 +33,8 @@
     <a class="button button-ghost" href="/shop">Return to shop</a>
   </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+{% if order.payment_state == "COMPLETED" %}<script src="/static/order-status.js" defer></script>{% endif %}
 {% endblock %}
