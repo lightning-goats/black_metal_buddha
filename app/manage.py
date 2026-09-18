@@ -8,8 +8,16 @@ from .catalog import PRODUCT_BY_SLUG
 from .db import SessionLocal
 from .fulfillment.printful import PrintfulClient
 from .models import Order, ProductVariant
+from .orders import (
+    create_order,
+    set_shipping_rate,
+    set_square_checkout,
+    sync_square_pricing,
+)
 from .payments.square import SquareClient
 from .reconcile import reconcile_orders
+from .refunds import request_refund
+from .schemas import CreateOrderIn
 from .settings import settings
 
 
@@ -53,6 +61,7 @@ def list_orders(_: argparse.Namespace) -> None:
                 order.order_state,
                 order.payment_state,
                 order.fulfillment_state,
+                order.refund_state,
                 f"{order.currency} {order.total_cents / 100:.2f}",
             )
 
@@ -78,6 +87,90 @@ def reconcile(_: argparse.Namespace) -> None:
     print(counts)
 
 
+def sandbox_checkout(args: argparse.Namespace) -> None:
+    if settings.app_env == "production" or settings.square_environment != "sandbox":
+        raise SystemExit("sandbox-checkout requires APP_ENV != production and Square sandbox")
+    if not settings.printful_token:
+        raise SystemExit("PRINTFUL_TOKEN is required to quote shipping")
+
+    data = CreateOrderIn(
+        recipient={
+            "name": args.name,
+            "email": args.email,
+            "phone": args.phone,
+            "address1": args.address1,
+            "address2": args.address2,
+            "city": args.city,
+            "state": args.state,
+            "postal_code": args.postal_code,
+            "country_code": args.country,
+        },
+        items=[{"sku": args.sku, "quantity": args.quantity}],
+    )
+
+    with SessionLocal() as session:
+        order = create_order(session, data)
+        printful = PrintfulClient()
+        rates = printful.get_shipping_rates(order)
+        if not rates:
+            raise SystemExit("Printful returned no shipping rates")
+
+        selected = next((r for r in rates if r["shipping"] == args.shipping), None)
+        if selected is None:
+            available = ", ".join(r["shipping"] for r in rates)
+            raise SystemExit(f"Shipping method {args.shipping!r} unavailable. Available: {available}")
+
+        set_shipping_rate(
+            session,
+            order,
+            shipping_method=selected["shipping"],
+            shipping_cents=selected["rate_cents"],
+            currency=selected["currency"],
+        )
+
+        square = SquareClient()
+        link = square.create_payment_link(order)
+        square_order = square.get_order(link["order_id"])
+        sync_square_pricing(session, order, square_order)
+        set_square_checkout(
+            session,
+            order,
+            payment_link_id=link["id"],
+            square_order_id=link["order_id"],
+            checkout_url=link["url"],
+        )
+
+        print(f"Order: {order.order_number}")
+        print(f"Subtotal: {order.currency} {order.subtotal_cents / 100:.2f}")
+        print(f"Shipping: {order.currency} {order.shipping_cents / 100:.2f} ({order.shipping_method})")
+        print(f"Square tax: {order.currency} {order.tax_cents / 100:.2f}")
+        print(f"Total: {order.currency} {order.total_cents / 100:.2f}")
+        print(f"Checkout: {order.square_checkout_url}")
+
+
+def refund_order(args: argparse.Namespace) -> None:
+    if settings.square_environment != "sandbox":
+        raise SystemExit("refund-order is sandbox-only in this phase")
+
+    with SessionLocal() as session:
+        order = session.scalar(select(Order).where(Order.order_number == args.order_number))
+        if order is None:
+            raise SystemExit("Order not found")
+
+        refund = request_refund(
+            session,
+            order,
+            amount_cents=args.amount_cents,
+            reason=args.reason,
+            client=SquareClient(),
+        )
+        print(
+            refund.square_refund_id,
+            refund.status,
+            f"{refund.currency} {refund.amount_cents / 100:.2f}",
+        )
+
+
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="Black Metal Buddha backend management")
     sub = p.add_subparsers(dest="command", required=True)
@@ -97,6 +190,27 @@ def parser() -> argparse.ArgumentParser:
 
     rec = sub.add_parser("reconcile")
     rec.set_defaults(func=reconcile)
+
+    checkout = sub.add_parser("sandbox-checkout")
+    checkout.add_argument("--sku", required=True)
+    checkout.add_argument("--quantity", type=int, default=1)
+    checkout.add_argument("--shipping", default="STANDARD")
+    checkout.add_argument("--name", required=True)
+    checkout.add_argument("--email", required=True)
+    checkout.add_argument("--phone")
+    checkout.add_argument("--address1", required=True)
+    checkout.add_argument("--address2")
+    checkout.add_argument("--city", required=True)
+    checkout.add_argument("--state", required=True)
+    checkout.add_argument("--postal-code", required=True)
+    checkout.add_argument("--country", default="US")
+    checkout.set_defaults(func=sandbox_checkout)
+
+    refund = sub.add_parser("refund-order")
+    refund.add_argument("order_number")
+    refund.add_argument("--amount-cents", type=int)
+    refund.add_argument("--reason", default="Customer refund")
+    refund.set_defaults(func=refund_order)
 
     return p
 
