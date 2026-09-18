@@ -127,3 +127,34 @@ If a deployment fails, check out that known-good commit, reinstall requirements 
 ## Phase 0 boundary
 
 Do not add Square or Printful secrets to this environment yet. No checkout, customer order, or payment flow should be enabled until Phase 1.
+
+
+---
+
+# Phase 1 additions
+
+For transactional deployment, also install:
+
+```
+deploy/systemd/blackmetalbuddha-worker.service
+deploy/systemd/blackmetalbuddha-reconcile.service
+deploy/systemd/blackmetalbuddha-reconcile.timer
+deploy/systemd/blackmetalbuddha-backup.service
+deploy/systemd/blackmetalbuddha-backup.timer
+```
+
+Apply database migrations before restarting Phase 1 code:
+
+```bash
+sudo -u blackmetalbuddha /opt/blackmetalbuddha/venv/bin/alembic \
+  -c /opt/blackmetalbuddha/current/alembic.ini upgrade head
+```
+
+After public transactional launch:
+
+```bash
+bash /opt/blackmetalbuddha/current/deploy/phase1-smoke-test.sh \
+  https://blackmetalbuddha.com
+```
+
+See `docs/24_PHASE1_LAUNCH_RUNBOOK.md` for catalog fingerprinting, production canary, backup/restore verification, final activation, and emergency shutdown.
