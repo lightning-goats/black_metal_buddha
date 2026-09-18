@@ -99,3 +99,11 @@ def test_sensitive_routes_are_no_store_and_noindex():
     response = client.get("/admin")
     assert response.headers["cache-control"] == "no-store, max-age=0"
     assert response.headers["x-robots-tag"] == "noindex, nofollow"
+
+
+def test_terms_page_and_sitemap_entry():
+    response = client.get("/terms")
+    assert response.status_code == 200
+    assert "Terms of Sale" in response.text
+    sitemap = client.get("/sitemap.xml")
+    assert "/terms" in sitemap.text
