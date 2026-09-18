@@ -69,6 +69,7 @@ class Order(Base):
     shipped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
     items: Mapped[list["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan", lazy="selectin")
+    shipments: Mapped[list["Shipment"]] = relationship(back_populates="order", cascade="all, delete-orphan", lazy="selectin")
 
 
 class OrderItem(Base):
@@ -86,6 +87,24 @@ class OrderItem(Base):
     printful_product_id_snapshot: Mapped[str | None] = mapped_column(String(128), nullable=True)
     printful_variant_id_snapshot: Mapped[str | None] = mapped_column(String(128), nullable=True)
     order: Mapped[Order] = relationship(back_populates="items")
+
+
+class Shipment(Base):
+    __tablename__ = "shipments"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[str] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"), index=True)
+    printful_shipment_id: Mapped[str] = mapped_column(String(128), unique=True, index=True)
+    status: Mapped[str] = mapped_column(String(32), default="UNKNOWN")
+    tracking_number: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    tracking_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    reshipment: Mapped[bool] = mapped_column(Boolean, default=False)
+    shipped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    returned_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+    order: Mapped[Order] = relationship(back_populates="shipments")
 
 
 class Refund(Base):
