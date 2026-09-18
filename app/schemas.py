@@ -37,3 +37,21 @@ class OrderOut(BaseModel):
     tax_cents: int
     total_cents: int
     square_checkout_url: str | None = None
+
+
+class ShippingRateOut(BaseModel):
+    shipping: str
+    name: str
+    rate_cents: int
+    currency: str
+    min_delivery_days: int | None = None
+    max_delivery_days: int | None = None
+
+
+class SelectShippingIn(BaseModel):
+    shipping: str = Field(min_length=1, max_length=64)
+
+
+class RefundRequestIn(BaseModel):
+    amount_cents: int | None = Field(default=None, ge=1)
+    reason: str = Field(default="Customer refund", min_length=1, max_length=192)
