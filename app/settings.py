@@ -46,6 +46,7 @@ class Settings:
     production_catalog_approved: bool = False
     production_catalog_fingerprint: str | None = None
     production_canary_mode: bool = False
+    support_email: str | None = None
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -83,6 +84,7 @@ class Settings:
             production_catalog_approved=_bool("PRODUCTION_CATALOG_APPROVED", False),
             production_catalog_fingerprint=os.getenv("PRODUCTION_CATALOG_FINGERPRINT"),
             production_canary_mode=_bool("PRODUCTION_CANARY_MODE", False),
+            support_email=os.getenv("SUPPORT_EMAIL"),
         )
 
     @property
@@ -139,6 +141,8 @@ class Settings:
                 missing.append("PostgreSQL DATABASE_URL")
             if not self.admin_enabled:
                 missing.append("admin credentials + APP_SECRET_KEY")
+            if not self.support_email:
+                missing.append("SUPPORT_EMAIL")
             if not self.square_access_token:
                 missing.append("SQUARE_ACCESS_TOKEN")
             if not self.square_location_id:
