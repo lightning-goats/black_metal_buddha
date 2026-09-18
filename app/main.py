@@ -11,7 +11,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from .api_phase1 import router as phase1_router
 from .catalog import PRODUCT_BY_SLUG, PRODUCTS
+from .db import init_db
+from .settings import settings as phase1_settings
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE_URL = os.getenv("PUBLIC_BASE_URL", "https://blackmetalbuddha.com").rstrip("/")
@@ -36,6 +39,15 @@ app.mount(
 )
 
 templates = Jinja2Templates(directory=ROOT / "app" / "templates")
+app.include_router(phase1_router)
+
+
+@app.on_event("startup")
+def phase1_dev_database_bootstrap() -> None:
+    # Production schema changes are applied with Alembic. Development and tests
+    # may auto-create the foundation schema for convenience.
+    if phase1_settings.app_env != "production":
+        init_db()
 
 
 @app.middleware("http")
