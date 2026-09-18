@@ -12,6 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from .admin import router as admin_router
 from .api_phase1 import router as phase1_router
 from .catalog import PRODUCT_BY_SLUG, PRODUCTS
 from .db import SessionLocal, init_db
@@ -54,6 +55,7 @@ app.mount(
 
 templates = Jinja2Templates(directory=ROOT / "app" / "templates")
 app.include_router(phase1_router)
+app.include_router(admin_router)
 
 
 @app.middleware("http")
