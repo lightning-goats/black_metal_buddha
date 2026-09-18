@@ -5,10 +5,23 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .fulfillment.printful import PrintfulClient
+from .fulfillment.printful import (
+    PrintfulClient,
+    PrintfulCostGuardError,
+    extract_printful_costs,
+)
 from .models import Job, Order, Shipment
 from .notifications.email import EmailSender
 from .settings import Settings, settings
+
+
+def _fail_permanently(session: Session, job: Job, order: Order, exc: Exception) -> None:
+    job.attempt_count += 1
+    job.state = "FAILED"
+    job.last_error = str(exc)[:2000]
+    order.fulfillment_state = "FAILED"
+    order.order_state = "FULFILLMENT_FAILED"
+    session.commit()
 
 
 def _retry_or_fail(session: Session, job: Job, exc: Exception) -> None:
@@ -52,12 +65,73 @@ def process_submit_printful_job(
         existing = pf.get_order_by_external_id(order.order_number)
         data = existing or pf.create_draft_order(order)
         order.printful_order_id = str(data.get("id") or "")
-        order.fulfillment_state = "DRAFT"
-        order.order_state = "FULFILLMENT_SUBMITTED"
-        order.submitted_to_printful_at = datetime.now(timezone.utc)
+        order.submitted_to_printful_at = order.submitted_to_printful_at or datetime.now(timezone.utc)
+
+        cost_status, cost_currency, cost_cents = extract_printful_costs(data)
+        order.printful_cost_status = cost_status or None
+        order.printful_cost_currency = cost_currency
+        order.printful_cost_cents = cost_cents
+
+        provider_status = str(data.get("status") or "draft").lower()
+
+        if config.printful_mode == "draft":
+            order.fulfillment_state = provider_status.upper()
+            order.order_state = "FULFILLMENT_SUBMITTED"
+            job.state = "COMPLETED"
+            job.last_error = None
+            session.commit()
+            return
+
+        already_confirmed = provider_status in {
+            "pending",
+            "inreview",
+            "inprocess",
+            "onhold",
+            "partial",
+            "fulfilled",
+        }
+        if not already_confirmed:
+            if cost_status != "done":
+                raise RuntimeError("Printful costs are not finished calculating")
+            if cost_currency != order.currency:
+                raise PrintfulCostGuardError(
+                    f"Printful cost currency {cost_currency!r} does not match {order.currency}"
+                )
+            if cost_cents is None:
+                raise RuntimeError("Printful total cost is not available")
+            if cost_cents > order.total_cents:
+                raise PrintfulCostGuardError(
+                    f"Printful cost {cost_cents} exceeds customer order total {order.total_cents}"
+                )
+
+            data = pf.confirm_order(f"@{order.order_number}")
+            provider_status = str(data.get("status") or "pending").lower()
+            cost_status, cost_currency, cost_cents = extract_printful_costs(data)
+            if cost_status:
+                order.printful_cost_status = cost_status
+            if cost_currency:
+                order.printful_cost_currency = cost_currency
+            if cost_cents is not None:
+                order.printful_cost_cents = cost_cents
+            order.printful_confirmed_at = datetime.now(timezone.utc)
+        else:
+            order.printful_confirmed_at = order.printful_confirmed_at or datetime.now(timezone.utc)
+
+        order.fulfillment_state = provider_status.upper()
+        if provider_status == "partial":
+            order.order_state = "PARTIALLY_SHIPPED"
+        elif provider_status == "fulfilled":
+            order.order_state = "SHIPPED"
+        elif provider_status == "onhold":
+            order.order_state = "FULFILLMENT_HOLD"
+        else:
+            order.order_state = "IN_PRODUCTION"
+
         job.state = "COMPLETED"
         job.last_error = None
         session.commit()
+    except PrintfulCostGuardError as exc:
+        _fail_permanently(session, job, order, exc)
     except Exception as exc:
         _retry_or_fail(session, job, exc)
 

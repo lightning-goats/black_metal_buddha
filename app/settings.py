@@ -35,6 +35,7 @@ class Settings:
     smtp_username: str | None
     smtp_password: str | None
     email_from: str | None
+    printful_confirm_enabled: bool = False
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -61,6 +62,7 @@ class Settings:
             smtp_username=os.getenv("SMTP_USERNAME"),
             smtp_password=os.getenv("SMTP_PASSWORD"),
             email_from=os.getenv("EMAIL_FROM"),
+            printful_confirm_enabled=_bool("PRINTFUL_CONFIRM_ENABLED", False),
         )
 
     @property
@@ -76,8 +78,11 @@ class Settings:
             raise ValueError("EMAIL_MODE must be disabled, console, or smtp")
         if self.email_mode == "smtp" and (not self.smtp_host or not self.email_from):
             raise ValueError("SMTP_HOST and EMAIL_FROM are required when EMAIL_MODE=smtp")
-        if self.printful_mode == "production" and not self.phase0_5_approved:
-            raise ValueError("Production Printful fulfillment requires PHASE0_5_APPROVED=true")
+        if self.printful_mode == "production":
+            if not self.phase0_5_approved:
+                raise ValueError("Production Printful fulfillment requires PHASE0_5_APPROVED=true")
+            if not self.printful_confirm_enabled:
+                raise ValueError("Production Printful fulfillment requires PRINTFUL_CONFIRM_ENABLED=true")
         if self.app_env == "production" and self.phase1_api_enabled:
             raise ValueError(
                 "Production checkout is intentionally blocked in the Phase 1 foundation"
