@@ -300,13 +300,12 @@ def checkout(request: Request):
 
 @app.get("/orders/{order_number}", include_in_schema=False)
 def order_status(request: Request, order_number: str):
-    if not phase1_settings.phase1_api_enabled:
-        raise HTTPException(status_code=404, detail="Order status unavailable")
-
     with SessionLocal() as session:
         order = get_order(session, order_number)
         if order is None:
             raise HTTPException(status_code=404, detail="Order not found")
+        if not phase1_settings.phase1_api_enabled and not order.is_canary:
+            raise HTTPException(status_code=404, detail="Order status unavailable")
 
         if order.order_state == "PAID":
             heading = "Payment received."
