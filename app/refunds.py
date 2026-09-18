@@ -30,7 +30,7 @@ def apply_refund_status(
             order.order_state = "REFUNDED"
         else:
             order.refund_state = "PARTIAL"
-        enqueue_job(session, order, "SEND_REFUND_CONFIRMATION")
+        enqueue_job(session, order, f"SEND_REFUND_CONFIRMATION:{refund.id}")
     elif status == "FAILED":
         order.refund_state = "FAILED"
     elif status in {"PENDING", "APPROVED"}:
