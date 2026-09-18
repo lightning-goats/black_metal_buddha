@@ -133,6 +133,14 @@ class SquareClient:
         response.raise_for_status()
         return response.json().get("payment") or {}
 
+    def get_refund(self, refund_id: str) -> dict[str, Any]:
+        response = self.client.get(
+            f"{self.config.square_api_base}/v2/refunds/{refund_id}",
+            headers=self._headers(),
+        )
+        response.raise_for_status()
+        return response.json().get("refund") or {}
+
     def refund_payment(
         self,
         *,
