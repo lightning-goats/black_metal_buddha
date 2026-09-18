@@ -18,6 +18,7 @@ from .catalog import PRODUCT_BY_SLUG, PRODUCTS
 from .catalog_ops import assert_production_catalog
 from .db import SessionLocal, init_db
 from .orders import get_order
+from .rate_limit import limiter
 from .settings import settings as phase1_settings
 from .storefront import price_floor_by_product, sellable_catalog, sellable_variants_for_product
 
@@ -82,6 +83,13 @@ async def security_headers(request: Request, call_next):
         "connect-src 'self'; "
         "base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
     )
+
+    sensitive_prefixes = ("/admin", "/checkout", "/orders/", "/api/")
+    if request.url.path.startswith(sensitive_prefixes):
+        response.headers["Cache-Control"] = "no-store, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
+
     return response
 
 
