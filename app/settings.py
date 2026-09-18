@@ -170,6 +170,8 @@ class Settings:
             missing.append("APP_ENV=production")
         if self.phase1_api_enabled:
             missing.append("PHASE1_API_ENABLED=false")
+        if self.production_checkout_enabled:
+            missing.append("PRODUCTION_CHECKOUT_ENABLED=false")
         if not self.production_canary_mode:
             missing.append("PRODUCTION_CANARY_MODE=true")
         if not self.phase0_5_approved:
@@ -190,8 +192,21 @@ class Settings:
             missing.append("PostgreSQL DATABASE_URL")
         if not self.square_access_token or not self.square_location_id:
             missing.append("live Square credentials")
+        expected_square_webhook_url = f"{self.public_base_url}/api/v1/webhooks/square"
+        if not self.square_webhook_signature_key:
+            missing.append("SQUARE_WEBHOOK_SIGNATURE_KEY")
+        if self.square_webhook_notification_url != expected_square_webhook_url:
+            missing.append(f"SQUARE_WEBHOOK_NOTIFICATION_URL={expected_square_webhook_url}")
         if not self.printful_token or not self.printful_store_id:
             missing.append("live Printful credentials")
+        if not self.printful_webhook_secret_key:
+            missing.append("PRINTFUL_WEBHOOK_SECRET_KEY")
+        if not self.smtp_host or not self.email_from:
+            missing.append("working SMTP configuration")
+        if not self.admin_enabled:
+            missing.append("admin credentials + APP_SECRET_KEY")
+        if not self.support_email:
+            missing.append("SUPPORT_EMAIL")
         if missing:
             raise ValueError("Production canary prerequisites are not satisfied: " + ", ".join(missing))
 
