@@ -32,6 +32,8 @@ class SquareClient:
     def create_payment_link(self, order: Order) -> dict[str, Any]:
         if not self.config.square_location_id:
             raise SquareConfigurationError("SQUARE_LOCATION_ID is not configured")
+        if not order.shipping_method:
+            raise SquareConfigurationError("Shipping method must be selected before checkout")
 
         buyer_address = {
             "address_line_1": order.ship_address1,
@@ -50,12 +52,29 @@ class SquareClient:
         if order.phone:
             pre_populated_data["buyer_phone_number"] = order.phone
 
+        checkout_options: dict[str, Any] = {
+            "redirect_url": f"{self.config.public_base_url}/orders/{order.order_number}",
+            "ask_for_shipping_address": True,
+            "allow_tipping": False,
+        }
+        if order.shipping_cents:
+            checkout_options["shipping_fee"] = {
+                "name": order.shipping_method,
+                "charge": {
+                    "amount": order.shipping_cents,
+                    "currency": order.currency,
+                },
+            }
+
         payload = {
             "idempotency_key": f"checkout-{order.order_number}",
             "description": f"Black Metal Buddha order {order.order_number}",
             "order": {
                 "location_id": self.config.square_location_id,
                 "reference_id": order.order_number,
+                "pricing_options": {
+                    "auto_apply_taxes": True,
+                },
                 "line_items": [
                     {
                         "name": item.name_snapshot,
@@ -69,11 +88,7 @@ class SquareClient:
                     for item in order.items
                 ],
             },
-            "checkout_options": {
-                "redirect_url": f"{self.config.public_base_url}/orders/{order.order_number}",
-                "ask_for_shipping_address": True,
-                "allow_tipping": False,
-            },
+            "checkout_options": checkout_options,
             "pre_populated_data": pre_populated_data,
             "payment_note": order.order_number,
         }
@@ -84,7 +99,7 @@ class SquareClient:
             json=payload,
         )
         response.raise_for_status()
-        payment_link = (response.json().get("payment_link") or {})
+        payment_link = response.json().get("payment_link") or {}
         if not payment_link.get("id") or not payment_link.get("order_id") or not payment_link.get("url"):
             raise RuntimeError("Square response did not contain a complete payment link")
         return payment_link
@@ -104,6 +119,35 @@ class SquareClient:
         )
         response.raise_for_status()
         return response.json().get("payment") or {}
+
+    def refund_payment(
+        self,
+        *,
+        payment_id: str,
+        amount_cents: int,
+        currency: str,
+        reason: str,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        payload = {
+            "idempotency_key": idempotency_key,
+            "payment_id": payment_id,
+            "amount_money": {
+                "amount": amount_cents,
+                "currency": currency,
+            },
+            "reason": reason,
+        }
+        response = self.client.post(
+            f"{self.config.square_api_base}/v2/refunds",
+            headers=self._headers(),
+            json=payload,
+        )
+        response.raise_for_status()
+        refund = response.json().get("refund") or {}
+        if not refund.get("id") or not refund.get("status"):
+            raise RuntimeError("Square refund response was incomplete")
+        return refund
 
     @staticmethod
     def payment_id_from_order(order: dict[str, Any]) -> str | None:
