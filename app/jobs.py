@@ -89,7 +89,7 @@ def process_email_job(
             mailer.send_order_confirmation(order)
         elif job.job_type == "SEND_SHIPPING_NOTIFICATION":
             mailer.send_shipping_notification(order)
-        elif job.job_type == "SEND_REFUND_CONFIRMATION":
+        elif job.job_type.startswith("SEND_REFUND_CONFIRMATION"):
             mailer.send_refund_confirmation(order)
         else:
             raise RuntimeError(f"Unknown email job type: {job.job_type}")
