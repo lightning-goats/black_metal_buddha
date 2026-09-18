@@ -148,3 +148,25 @@ def test_canary_order_marker_is_persisted():
             is_canary=True,
         )
         assert order.is_canary is True
+
+
+def test_invalid_catalog_import_rolls_back_atomically():
+    manifest = {
+        "version": 1,
+        "currency": "USD",
+        "variants": [{
+            "product_slug": "lotus-of-the-void",
+            "sku": "ONLY-ONE",
+            "size": "M",
+            "color": "Black",
+            "retail_price_cents": 3200,
+            "active": True,
+            "sellable": True,
+            "printful_product_id": "1000",
+            "printful_variant_id": "4011",
+        }],
+    }
+    with session() as db:
+        with pytest.raises(ValueError):
+            import_catalog_manifest(db, manifest, apply=True)
+        assert db.query(ProductVariant).count() == 0
