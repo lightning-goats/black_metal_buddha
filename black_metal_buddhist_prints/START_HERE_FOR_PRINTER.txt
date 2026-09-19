@@ -1,89 +1,153 @@
-BLACK METAL BUDDHIST — PRINTER HANDOFF
-Prepared September 17, 2026
+BLACK METAL BUDDHIST — PRINTER / PRINTFUL HANDOFF
+Prepared September 19, 2026
 
-STATUS: READY TO SEND FOR PRINTER REVIEW AND A SAMPLE, NOT PRESS-APPROVED
+STATUS: READY FOR PRINTER / PRINTFUL REVIEW AND PHYSICAL SAMPLE.
+NOT YET APPROVED FOR AN UNATTENDED PRODUCTION RUN.
 
-The source images were generated shirt mockups, not flat high-resolution
-production masters. The artwork has been isolated from those mockups. This
-package preserves the existing composition and lettering; it does not claim
-a full-resolution redraw. Do not print the shirt photographs themselves.
+This package contains four Black Metal Buddha designs. All production canvases
+are 12 x 16 inches (3600 x 4800 pixels) at nominal 300 pixels/inch and are
+intended for a BLACK garment.
+
+IMPORTANT SOURCE DIFFERENCE
+The first three designs — Lotus of the Void, Dharma of Decay, and Meditate on
+Death — originated as generated shirt mockups. Their transparent raster files
+were isolated and enlarged from those mockups, and their SVGs are automatic
+two-ink traces. They are suitable for printer review and sample validation but
+do not contain native 300-ppi source detail.
+
+Longchenpa — Rest in Illusion is different. Its canonical production source is
+the approved flat two-ink SVG master:
+  02_two_ink_vector/longchenpa_rest_in_illusion_two_ink.svg
+
+Its 3600 x 4800 transparent PNGs are deterministically rendered from that
+vector master. They are not extracted from a shirt photograph.
 
 START WITH THESE FILES
-01_transparent_png/
-  The closest version to the mockups: continuous-tone artwork, with the shirt,
-  surrounding backdrop and dark garment field removed. Transparent RGBA PNG,
-  embedded sRGB profile, 3600 x 4800 pixels, nominal 300 pixels/inch.
-  Send these for digital-print review when retaining the original tonal
-  variation is the priority. No solid black or white rectangular background.
 
-ALTERNATIVE FOR A TWO-INK LOOK
+01_transparent_png/
+  Transparent RGBA PNG production canvases, 3600 x 4800 pixels, nominal
+  300 pixels/inch.
+
+  For the first three designs these retain the closest available tonal version
+  of the approved mockups.
+
+  For Longchenpa the file is the approved two-ink production artwork rendered
+  from the SVG master. It is intentionally equivalent in appearance to its
+  file in 03_two_ink_png/.
+
 02_two_ink_vector/
-  Genuine cubic-Bezier SVG paths, separated into two named color groups:
-  ink-bone (#dfd7cb) and ink-red (#be3e37). Black is garment/negative space.
-  These are simplified automatic traces, NOT hand-redrawn native masters.
-  Some gray shading and tiny distressed marks differ from the PNG extractions.
-  All lettering is outlined; no font files or external artwork are required.
-  RGB color groups are NOT certified Pantone colors or final press separations.
+  Scalable SVG artwork with outlined shapes and no required fonts or external
+  artwork. Black is garment / transparent negative space.
+
+  Legacy first-three traces use their original approximate bone/red colors.
+
+  Longchenpa uses the current Black Metal Buddha production palette:
+    Bone:       #E9E1D5
+    Ritual Red: #971F1F
+
+  Longchenpa's SVG is the canonical production master for that design.
 
 03_two_ink_png/
-  Transparent 3600 x 4800 PNG renderings of the two-ink SVGs, also sRGB and
-  nominal 300 pixels/inch. Use only when the two-ink appearance is preferred.
-  These are alternatives, not additional layers to print over the first PNGs.
+  Transparent 3600 x 4800 PNG renderings of the two-ink SVGs at nominal
+  300 pixels/inch.
+
+  Do NOT print these on top of the files in 01_transparent_png/. Choose one
+  production source appropriate to the selected printing process.
 
 04_previews/
-  Black-background visual proofs of both versions. The collection preview
-  shows the continuous-tone versions. FOR REFERENCE ONLY; not print files.
+  Black-background visual proofs only. DO NOT PRINT THESE FILES.
+
+  ALL_FOUR_artwork_preview.jpg is the current collection proof.
 
 05_original_mockups/
-  Original approved shirt concepts, saved as reference JPGs.
-  FOR REFERENCE ONLY; do not print the entire shirt photograph.
+  Reference-only visual proofs / original approved concepts. DO NOT use these
+  as production print files. The Longchenpa file in this directory is a
+  black-background reference proof rather than a garment photograph.
 
 CANVAS, SIZE AND GARMENT
-All production canvases are 12 x 16 inches (30.48 x 40.64 cm).
-The artwork is proportionally fitted and centered, with approximately
-0.25 inches of transparent margin above and below. Use a BLACK garment.
-The black-looking interior details and distress holes are transparent.
-Do not substitute a white or pale garment without adapting the art.
 
-  Lotus of the Void: approx. 10.45 x 15.50 inches of artwork.
-    Extracted source: 664 x 985 pixels.
-    Original raster detail at supplied size: approx. 64 ppi.
-  Dharma of Decay: approx. 11.17 x 15.50 inches of artwork.
-    Extracted source: 702 x 974 pixels.
-    Original raster detail at supplied size: approx. 63 ppi.
-  Meditate on Death: approx. 11.03 x 15.50 inches of artwork.
-    Extracted source: 681 x 957 pixels.
-    Original raster detail at supplied size: approx. 62 ppi.
+Canvas:
+  12 x 16 inches (30.48 x 40.64 cm)
+  3600 x 4800 pixels
+  nominal 300 pixels/inch
+  transparent background
+  black garment intended
 
-The printer must confirm the allowed print area for the actual shirt model,
-size and process. Scale proportionally; do not stretch to fill the canvas.
-Placement on the garment is not baked in: agree on chest placement before
-printing. A preview may trim transparent padding automatically, so confirm
-the actual artwork dimensions rather than relying only on upload settings.
+Approximate artwork extents:
 
-IMPORTANT RESOLUTION DISCLOSURE
-The original mockups are 1254 x 1254 pixels, but the design occupies only
-part of each image. The continuous-tone PNGs are enlarged from the extracted
-artwork; setting a 300-ppi export does NOT create native 300-ppi detail.
-Vector tracing gives scalable edges, but also does not recover lost detail.
-These files are useful for printer assessment and a physical sample. They
-should not be treated as automatically approved for a large production run.
+  Lotus of the Void
+    artwork: 10.45 x 15.50 inches
+    legacy extracted source: 664 x 985 pixels
+    effective original raster detail at placed size: ~64 ppi
 
-REQUIRED BEFORE A RUN
-Inspect all lettering, thin ornamental strokes, small gaps and grain at the
-actual output size. Compare both file variants with their matching previews.
-The many small distressed marks are intentional, but the shop may need to
-simplify tiny islands, enlarge minimum lines/gaps, or adjust the artwork for
-its equipment. Obtain approval before making material visual changes.
-The printer must determine underbase, color matching, trapping/choke, ink
-sequence, mesh/halftone settings and final separations as applicable. The
-files do not contain a pre-engineered underbase or registration marks.
-Some edge pixels in the raster PNGs are anti-aliased. Review how the chosen
-process handles them on black fabric. Request one physical sample and approve
-its fine detail, color, hand-feel and placement before ordering a larger run.
+  Dharma of Decay
+    artwork: 11.17 x 15.50 inches
+    legacy extracted source: 702 x 974 pixels
+    effective original raster detail at placed size: ~63 ppi
 
-REFERENCE
-Printful, "How to prepare perfect print files for print-on-demand"
-(updated July 28, 2025; consulted September 17, 2026) discusses PNG/sRGB,
-product-specific print areas, source resolution and dark-shirt transparency.
-The shop's specifications for the selected product take precedence.
+  Meditate on Death
+    artwork: 11.03 x 15.50 inches
+    legacy extracted source: 681 x 957 pixels
+    effective original raster detail at placed size: ~62 ppi
+
+  Longchenpa — Rest in Illusion
+    artwork: approximately 10.78 x 15.08 inches
+    canonical source: scalable two-ink SVG master
+    transparent canvas offset: approximately 0.61 in left / 0.52 in top
+    raster export: vector-derived 3600 x 4800, nominal 300 ppi
+
+The printer / Printful product template determines the final permitted print
+area. Scale proportionally; never stretch the artwork to fill an incompatible
+print area. Confirm top-of-print placement below the collar before production.
+
+TRANSPARENCY AND BLACK GARMENT
+
+The black-looking negative areas inside the designs are transparent so the
+black garment supplies those values. Do not flatten the production files onto
+a black rectangle. Do not substitute a white or pale garment without adapting
+the artwork.
+
+The Longchenpa PNGs contain transparent, bone-white, ritual-red and
+anti-aliased edge pixels produced by vector rasterization. Its color intent is
+the two named inks above; process-specific underbase and edge handling are the
+printer's responsibility.
+
+FIRST THREE DESIGNS — RESOLUTION DISCLOSURE
+
+For Lotus of the Void, Dharma of Decay, and Meditate on Death, a 300-ppi file
+header does not create native 300-ppi source detail. Their source mockups were
+1254 x 1254 pixels and the artwork occupied only part of each source image.
+Vector tracing improves scalability of traced edges but cannot restore detail
+that was absent from the original raster.
+
+Longchenpa is not subject to that specific limitation because its production
+raster is rendered from the approved vector master.
+
+REQUIRED BEFORE A PRODUCTION RUN
+
+For every design:
+- inspect lettering at actual output size
+- inspect thin ornamental strokes and tiny knockout gaps
+- preserve intentional distressed texture
+- confirm crop and chest placement
+- confirm white / bone coverage on black fabric
+- confirm ritual-red reproduction
+- verify any required underbase, choke/trap and process separations
+- approve one physical sample before a broader run
+
+For Printful specifically, use the currently selected product's live print
+template and current file requirements as authoritative for placement and
+maximum print area.
+
+CHECKSUMS
+
+SHA256SUMS.txt contains SHA-256 hashes for the printer package. Use it to
+confirm files have not changed between approval and upload.
+
+PRODUCTION RECORD
+
+PRINT_SPECIFICATIONS.json identifies the source/master paths, expected canvas,
+artwork dimensions, preview files and current approval status.
+
+Physical sample approval and final Printful product/variant mapping remain
+required before Black Metal Buddha enables transactional production.
