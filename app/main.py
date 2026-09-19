@@ -215,6 +215,7 @@ def product_detail(request: Request, slug: str):
         "description": product.description,
         "sku": product.sku,
         "brand": {"@type": "Brand", "name": SITE_NAME},
+        "category": product.series,
         "image": [f"{BASE_URL}{product.image}"],
         "url": f"{BASE_URL}/products/{product.slug}",
     }
