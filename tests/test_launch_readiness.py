@@ -27,7 +27,12 @@ def session():
 
 def add_launch_variants(db):
     for index, slug in enumerate(
-        ["lotus-of-the-void", "dharma-of-decay", "meditate-on-death"],
+        [
+            "lotus-of-the-void",
+            "dharma-of-decay",
+            "meditate-on-death",
+            "longchenpa-rest-in-illusion",
+        ],
         start=1,
     ):
         db.add(
@@ -116,7 +121,7 @@ def test_manifest_round_trip():
 
     with session() as target:
         result = import_catalog_manifest(target, json.loads(json.dumps(manifest)), apply=True)
-        assert result["count"] == 3
+        assert result["count"] == 4
         assert catalog_fingerprint(target) == source_fingerprint
         assert not catalog_errors(target)
 
