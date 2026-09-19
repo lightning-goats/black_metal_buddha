@@ -186,6 +186,9 @@ Order the remaining designs using the chosen production specification:
 
 4. **Lotus of the Void**
 5. **Meditate on Death**
+6. **Longchenpa — Rest in Illusion**
+
+Longchenpa is an approved Lineage Series design and must receive the same physical production approval before its variants become sellable.
 
 If Dharma of Decay required artwork changes after Round B, order a corrected final Dharma sample too.
 
@@ -243,7 +246,7 @@ After the production combination is approved:
 - artwork closeup
 - collar/fabric closeup
 - on-body fit if practical
-- consistent lighting across all three designs
+- consistent lighting across all four designs
 
 Do not remove mockups until real photography is good enough to improve the product presentation.
 
@@ -282,7 +285,7 @@ All boxes must be checked before Phase 1 transactional launch:
 - [ ] primary blank physically selected
 - [ ] print method physically selected
 - [ ] exact print dimensions approved
-- [ ] all three designs physically approved
+- [ ] all four designs physically approved
 - [ ] at least one candidate completed a 3-wash test
 - [ ] production art frozen and checksummed
 - [ ] Printful product/variant IDs recorded
