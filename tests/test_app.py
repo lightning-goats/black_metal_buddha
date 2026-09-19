@@ -116,6 +116,7 @@ def test_longchenpa_product_is_in_catalog_and_print_asset_is_served():
     assert page.status_code == 200
     assert "Longchenpa — Rest in Illusion" in page.text
     assert "Rest in Illusion." in page.text
+    assert "LINEAGE SERIES" in page.text
     assert "/print-assets/02_two_ink_vector/longchenpa_rest_in_illusion_two_ink.svg" in page.text
 
     art = client.get("/print-assets/02_two_ink_vector/longchenpa_rest_in_illusion_two_ink.svg")
