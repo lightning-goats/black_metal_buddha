@@ -79,3 +79,31 @@ def test_robots_blocks_transactional_utility_paths():
 def test_admin_is_hidden_when_not_configured():
     response = client.get("/admin")
     assert response.status_code == 404
+
+
+def test_contact_page_and_sitemap_entry():
+    response = client.get("/contact")
+    assert response.status_code == 200
+    assert "Reach Black Metal Buddha" in response.text
+    sitemap = client.get("/sitemap.xml")
+    assert "/contact" in sitemap.text
+
+
+def test_sensitive_routes_are_no_store_and_noindex():
+    response = client.get("/checkout")
+    # Checkout is hidden with Phase 1 disabled, but sensitive response headers
+    # must still prevent browser/proxy caching and indexing.
+    assert response.headers["cache-control"] == "no-store, max-age=0"
+    assert response.headers["x-robots-tag"] == "noindex, nofollow"
+
+    response = client.get("/admin")
+    assert response.headers["cache-control"] == "no-store, max-age=0"
+    assert response.headers["x-robots-tag"] == "noindex, nofollow"
+
+
+def test_terms_page_and_sitemap_entry():
+    response = client.get("/terms")
+    assert response.status_code == 200
+    assert "Terms of Sale" in response.text
+    sitemap = client.get("/sitemap.xml")
+    assert "/terms" in sitemap.text

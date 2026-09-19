@@ -2,13 +2,21 @@ from __future__ import annotations
 
 import argparse
 import json
+from pathlib import Path
 
 from sqlalchemy import select
 
 from .catalog import PRODUCT_BY_SLUG
+from .catalog_ops import (
+    assert_production_catalog,
+    catalog_errors,
+    catalog_fingerprint,
+    catalog_manifest,
+    import_catalog_manifest,
+)
 from .db import SessionLocal
 from .fulfillment.printful import PrintfulClient
-from .models import Order, ProductVariant
+from .models import Job, Order, ProductVariant
 from .ops import build_attention_report
 from .orders import (
     create_order,
@@ -17,7 +25,7 @@ from .orders import (
     sync_square_pricing,
 )
 from .payments.square import SquareClient
-from .reconcile import reconcile_orders
+from .reconcile import reconcile_orders, reconcile_printful_order, reconcile_square_order
 from .refunds import request_refund
 from .schemas import CreateOrderIn
 from .settings import settings
@@ -60,6 +68,7 @@ def list_orders(_: argparse.Namespace) -> None:
         for order in orders:
             print(
                 order.order_number,
+                "CANARY" if order.is_canary else "ORDER",
                 order.order_state,
                 order.payment_state,
                 order.fulfillment_state,
@@ -89,13 +98,8 @@ def reconcile(_: argparse.Namespace) -> None:
     print(counts)
 
 
-def sandbox_checkout(args: argparse.Namespace) -> None:
-    if settings.app_env == "production" or settings.square_environment != "sandbox":
-        raise SystemExit("sandbox-checkout requires APP_ENV != production and Square sandbox")
-    if not settings.printful_token:
-        raise SystemExit("PRINTFUL_TOKEN is required to quote shipping")
-
-    data = CreateOrderIn(
+def checkout_input(args: argparse.Namespace) -> CreateOrderIn:
+    return CreateOrderIn(
         recipient={
             "name": args.name,
             "email": args.email,
@@ -110,17 +114,25 @@ def sandbox_checkout(args: argparse.Namespace) -> None:
         items=[{"sku": args.sku, "quantity": args.quantity}],
     )
 
+
+def create_checkout_from_cli(args: argparse.Namespace, *, is_canary: bool) -> Order:
+    data = checkout_input(args)
     with SessionLocal() as session:
-        order = create_order(session, data)
+        if is_canary:
+            assert_production_catalog(session, settings.production_catalog_fingerprint)
+
+        order = create_order(session, data, is_canary=is_canary)
         printful = PrintfulClient()
         rates = printful.get_shipping_rates(order)
         if not rates:
             raise SystemExit("Printful returned no shipping rates")
 
-        selected = next((r for r in rates if r["shipping"] == args.shipping), None)
+        selected = next((rate for rate in rates if rate["shipping"] == args.shipping), None)
         if selected is None:
-            available = ", ".join(r["shipping"] for r in rates)
-            raise SystemExit(f"Shipping method {args.shipping!r} unavailable. Available: {available}")
+            available = ", ".join(rate["shipping"] for rate in rates)
+            raise SystemExit(
+                f"Shipping method {args.shipping!r} unavailable. Available: {available}"
+            )
 
         set_shipping_rate(
             session,
@@ -143,16 +155,91 @@ def sandbox_checkout(args: argparse.Namespace) -> None:
         )
 
         print(f"Order: {order.order_number}")
+        print(f"Mode: {'LIVE PRODUCTION CANARY' if is_canary else 'SANDBOX'}")
         print(f"Subtotal: {order.currency} {order.subtotal_cents / 100:.2f}")
-        print(f"Shipping: {order.currency} {order.shipping_cents / 100:.2f} ({order.shipping_method})")
+        print(
+            f"Shipping: {order.currency} {order.shipping_cents / 100:.2f} "
+            f"({order.shipping_method})"
+        )
         print(f"Square tax: {order.currency} {order.tax_cents / 100:.2f}")
         print(f"Total: {order.currency} {order.total_cents / 100:.2f}")
         print(f"Checkout: {order.square_checkout_url}")
+        return order
+
+
+def sandbox_checkout(args: argparse.Namespace) -> None:
+    if settings.app_env == "production" or settings.square_environment != "sandbox":
+        raise SystemExit("sandbox-checkout requires APP_ENV != production and Square sandbox")
+    if not settings.printful_token:
+        raise SystemExit("PRINTFUL_TOKEN is required to quote shipping")
+    create_checkout_from_cli(args, is_canary=False)
+
+
+def production_canary(args: argparse.Namespace) -> None:
+    if not args.i_understand_this_is_live:
+        raise SystemExit(
+            "Refusing live canary. Re-run with --i-understand-this-is-live "
+            "only when a real Square charge and Printful fulfillment are intended."
+        )
+    settings.validate_canary_safety()
+    order = create_checkout_from_cli(args, is_canary=True)
+    print()
+    print("LIVE CANARY CREATED.")
+    print("Pay the Square checkout yourself, then allow the worker/reconciliation timer to run.")
+    print(f"Check with: python -m app.manage canary-status {order.order_number}")
+
+
+def canary_status(args: argparse.Namespace) -> None:
+    with SessionLocal() as session:
+        order = session.scalar(select(Order).where(Order.order_number == args.order_number))
+        if order is None:
+            raise SystemExit("Order not found")
+        if not order.is_canary:
+            raise SystemExit("Refusing: order is not marked as a canary")
+
+        if order.square_order_id and settings.square_access_token:
+            reconcile_square_order(session, order, client=SquareClient())
+        if order.payment_state == "COMPLETED" and settings.printful_token:
+            reconcile_printful_order(session, order, client=PrintfulClient())
+
+        jobs = session.scalars(select(Job).where(Job.order_id == order.id)).all()
+        failed = [job for job in jobs if job.state == "FAILED"]
+        email_jobs = [job for job in jobs if job.job_type == "SEND_ORDER_CONFIRMATION"]
+
+        checks = {
+            "payment_completed": order.payment_state == "COMPLETED",
+            "printful_confirmed": order.printful_confirmed_at is not None,
+            "printful_cost_known": order.printful_cost_cents is not None,
+            "printful_cost_within_retail": (
+                order.printful_cost_cents is not None
+                and order.printful_cost_cents <= order.total_cents
+            ),
+            "no_failed_jobs": not failed,
+            "confirmation_email_completed": bool(email_jobs)
+            and all(job.state == "COMPLETED" for job in email_jobs),
+            "fulfillment_started": order.fulfillment_state
+            in {"PENDING", "INREVIEW", "INPROCESS", "ONHOLD", "PARTIAL", "FULFILLED"},
+        }
+        print(json.dumps(
+            {
+                "order_number": order.order_number,
+                "order_state": order.order_state,
+                "payment_state": order.payment_state,
+                "fulfillment_state": order.fulfillment_state,
+                "printful_cost_cents": order.printful_cost_cents,
+                "retail_total_cents": order.total_cents,
+                "checks": checks,
+            },
+            indent=2,
+            sort_keys=True,
+        ))
+        if not all(checks.values()):
+            raise SystemExit(2)
 
 
 def refund_order(args: argparse.Namespace) -> None:
     if settings.square_environment != "sandbox":
-        raise SystemExit("refund-order is sandbox-only in this phase")
+        raise SystemExit("refund-order is sandbox-only; use the gated admin UI in production")
 
     with SessionLocal() as session:
         order = session.scalar(select(Order).where(Order.order_number == args.order_number))
@@ -173,7 +260,6 @@ def refund_order(args: argparse.Namespace) -> None:
         )
 
 
-
 def ops_report(args: argparse.Namespace) -> None:
     with SessionLocal() as session:
         report = build_attention_report(session)
@@ -187,6 +273,66 @@ def ops_report(args: argparse.Namespace) -> None:
 
     if args.fail_on_attention and report["counts"]["attention_total"]:
         raise SystemExit(2)
+
+
+def catalog_validate(args: argparse.Namespace) -> None:
+    with SessionLocal() as session:
+        errors = catalog_errors(session)
+        fingerprint = catalog_fingerprint(session)
+    print(f"fingerprint={fingerprint}")
+    if errors:
+        for error in errors:
+            print(f"ERROR: {error}")
+        raise SystemExit(2)
+    if args.expect and fingerprint != args.expect.lower():
+        print(f"ERROR: expected fingerprint {args.expect}, got {fingerprint}")
+        raise SystemExit(2)
+    print("Catalog valid.")
+
+
+def catalog_export(args: argparse.Namespace) -> None:
+    with SessionLocal() as session:
+        manifest = catalog_manifest(session)
+        fingerprint = catalog_fingerprint(session)
+    path = Path(args.path)
+    path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"Wrote {path}")
+    print(f"sellable_fingerprint={fingerprint}")
+
+
+def catalog_import(args: argparse.Namespace) -> None:
+    if settings.app_env == "production" and settings.phase1_api_enabled:
+        raise SystemExit("Disable public production checkout before importing catalog data")
+    manifest = json.loads(Path(args.path).read_text(encoding="utf-8"))
+    with SessionLocal() as session:
+        result = import_catalog_manifest(session, manifest, apply=args.apply)
+        if args.apply:
+            errors = catalog_errors(session)
+            if errors:
+                raise SystemExit("Imported catalog is invalid: " + "; ".join(errors))
+            fingerprint = catalog_fingerprint(session)
+        else:
+            fingerprint = None
+    print(json.dumps(result, indent=2))
+    if args.apply:
+        print(f"sellable_fingerprint={fingerprint}")
+    else:
+        print("Dry run only. Re-run with --apply to persist.")
+
+
+def add_checkout_arguments(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--sku", required=True)
+    parser.add_argument("--quantity", type=int, default=1)
+    parser.add_argument("--shipping", default="STANDARD")
+    parser.add_argument("--name", required=True)
+    parser.add_argument("--email", required=True)
+    parser.add_argument("--phone")
+    parser.add_argument("--address1", required=True)
+    parser.add_argument("--address2")
+    parser.add_argument("--city", required=True)
+    parser.add_argument("--state", required=True)
+    parser.add_argument("--postal-code", required=True)
+    parser.add_argument("--country", default="US")
 
 
 def parser() -> argparse.ArgumentParser:
@@ -210,19 +356,17 @@ def parser() -> argparse.ArgumentParser:
     rec.set_defaults(func=reconcile)
 
     checkout = sub.add_parser("sandbox-checkout")
-    checkout.add_argument("--sku", required=True)
-    checkout.add_argument("--quantity", type=int, default=1)
-    checkout.add_argument("--shipping", default="STANDARD")
-    checkout.add_argument("--name", required=True)
-    checkout.add_argument("--email", required=True)
-    checkout.add_argument("--phone")
-    checkout.add_argument("--address1", required=True)
-    checkout.add_argument("--address2")
-    checkout.add_argument("--city", required=True)
-    checkout.add_argument("--state", required=True)
-    checkout.add_argument("--postal-code", required=True)
-    checkout.add_argument("--country", default="US")
+    add_checkout_arguments(checkout)
     checkout.set_defaults(func=sandbox_checkout)
+
+    canary = sub.add_parser("production-canary")
+    add_checkout_arguments(canary)
+    canary.add_argument("--i-understand-this-is-live", action="store_true")
+    canary.set_defaults(func=production_canary)
+
+    canary_check = sub.add_parser("canary-status")
+    canary_check.add_argument("order_number")
+    canary_check.set_defaults(func=canary_status)
 
     refund = sub.add_parser("refund-order")
     refund.add_argument("order_number")
@@ -234,6 +378,19 @@ def parser() -> argparse.ArgumentParser:
     ops.add_argument("--json", action="store_true")
     ops.add_argument("--fail-on-attention", action="store_true")
     ops.set_defaults(func=ops_report)
+
+    validate = sub.add_parser("catalog-validate")
+    validate.add_argument("--expect")
+    validate.set_defaults(func=catalog_validate)
+
+    export = sub.add_parser("catalog-export")
+    export.add_argument("path")
+    export.set_defaults(func=catalog_export)
+
+    importer = sub.add_parser("catalog-import")
+    importer.add_argument("path")
+    importer.add_argument("--apply", action="store_true")
+    importer.set_defaults(func=catalog_import)
 
     return p
 

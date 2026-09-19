@@ -62,6 +62,14 @@ def redirect(path: str, message: str | None = None) -> RedirectResponse:
     return RedirectResponse(path, status_code=303)
 
 
+def require_catalog_writable() -> None:
+    if settings.app_env == "production" and settings.phase1_api_enabled:
+        raise HTTPException(
+            status_code=409,
+            detail="Catalog edits require production checkout to be disabled",
+        )
+
+
 def get_order_or_404(session: Session, order_number: str) -> Order:
     order = session.scalar(select(Order).where(Order.order_number == order_number))
     if order is None:
@@ -431,6 +439,7 @@ async def create_variant_action(
     actor: str = Depends(require_admin),
     session: Session = Depends(db_session),
 ):
+    require_catalog_writable()
     form = await request.form()
     verify_csrf(str(form.get("csrf") or ""), "create_variant", "new")
     product_slug = str(form.get("product_slug") or "").strip()
@@ -478,6 +487,7 @@ async def edit_variant_action(
     actor: str = Depends(require_admin),
     session: Session = Depends(db_session),
 ):
+    require_catalog_writable()
     form = await request.form()
     verify_csrf(str(form.get("csrf") or ""), "edit_variant", str(variant_id))
     variant = session.get(ProductVariant, variant_id)

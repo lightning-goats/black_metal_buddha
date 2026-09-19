@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-hero shell narrow">
+  <p class="eyebrow">TERMS</p>
+  <h1>Terms of Sale</h1>
+  <p>These terms describe the basic conditions for purchasing made-to-order Black Metal Buddha merchandise.</p>
+</section>
+<section class="section shell prose-grid">
+  <article>
+    <h2>Orders</h2>
+    <p>An order is submitted for fulfillment only after Square confirms payment. We may cancel and refund an order if a product becomes unavailable, a payment cannot be reconciled, fulfillment cannot be completed, or an obvious pricing or technical error occurred.</p>
+  </article>
+  <article>
+    <h2>Prices, tax, and shipping</h2>
+    <p>Merchandise prices are displayed before checkout. Available shipping charges are calculated for the delivery address, and applicable tax is calculated through Square. The final Square checkout total is the amount authorized for payment.</p>
+  </article>
+  <article>
+    <h2>Made to order</h2>
+    <p>Products are produced on demand through our fulfillment provider. Changes or cancellations may no longer be possible once production has started. Returns and problem-order remedies are governed by our Shipping &amp; Returns policy and any rights that cannot legally be waived.</p>
+  </article>
+  <article>
+    <h2>Product appearance</h2>
+    <p>Screen colors, garment-dye variation, print texture, and placement can vary modestly from photographs or mockups. We aim to represent the product accurately and treat material printing or fulfillment defects under the Shipping &amp; Returns policy.</p>
+  </article>
+  <article>
+    <h2>Artwork and intellectual property</h2>
+    <p>Black Metal Buddha artwork, branding, product photographs, and site content may not be reproduced, sold, or used commercially without permission except where applicable law allows otherwise.</p>
+  </article>
+  <article>
+    <h2>Service availability</h2>
+    <p>We may temporarily suspend checkout, alter available products, or correct site information when necessary. Nothing in these terms limits rights or remedies that applicable law does not permit us to exclude.</p>
+  </article>
+</section>
+<section class="section shell narrow">
+  <h2>Questions</h2>
+  {% if support_email %}
+    <p>Email <a href="mailto:{{ support_email }}">{{ support_email }}</a> with questions about an order or these terms.</p>
+  {% else %}
+    <p>Customer support contact information will be published before checkout opens.</p>
+  {% endif %}
+</section>
+{% endblock %}

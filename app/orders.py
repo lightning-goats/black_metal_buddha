@@ -39,7 +39,7 @@ def enqueue_job(session: Session, order: Order, job_type: str) -> bool:
     return True
 
 
-def create_order(session: Session, data: CreateOrderIn) -> Order:
+def create_order(session: Session, data: CreateOrderIn, *, is_canary: bool = False) -> Order:
     order_id = str(uuid4())
     order_number = new_order_number()
     items: list[OrderItem] = []
@@ -103,6 +103,7 @@ def create_order(session: Session, data: CreateOrderIn) -> Order:
         tax_cents=0,
         total_cents=subtotal,
         printful_external_id=order_number,
+        is_canary=is_canary,
         items=items,
     )
     session.add(order)

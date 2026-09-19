@@ -1,0 +1,22 @@
+[Unit]
+Description=Black Metal Buddha PostgreSQL backup
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=blackmetalbuddha
+Group=blackmetalbuddha
+WorkingDirectory=/opt/blackmetalbuddha/current
+EnvironmentFile=/etc/blackmetalbuddha/blackmetalbuddha.env
+Environment=BMB_BACKUP_DIR=/var/backups/blackmetalbuddha
+Environment=BMB_BACKUP_RETENTION_DAYS=30
+
+ExecStartPre=+/usr/bin/install -d -m 0700 -o blackmetalbuddha -g blackmetalbuddha /var/backups/blackmetalbuddha
+ExecStart=/usr/bin/bash /opt/blackmetalbuddha/current/deploy/backup-postgres.sh
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/backups/blackmetalbuddha

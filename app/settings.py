@@ -44,6 +44,9 @@ class Settings:
     production_checkout_enabled: bool = False
     production_canary_approved: bool = False
     production_catalog_approved: bool = False
+    production_catalog_fingerprint: str | None = None
+    production_canary_mode: bool = False
+    support_email: str | None = None
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -79,6 +82,9 @@ class Settings:
             production_checkout_enabled=_bool("PRODUCTION_CHECKOUT_ENABLED", False),
             production_canary_approved=_bool("PRODUCTION_CANARY_APPROVED", False),
             production_catalog_approved=_bool("PRODUCTION_CATALOG_APPROVED", False),
+            production_catalog_fingerprint=os.getenv("PRODUCTION_CATALOG_FINGERPRINT"),
+            production_canary_mode=_bool("PRODUCTION_CANARY_MODE", False),
+            support_email=os.getenv("SUPPORT_EMAIL"),
         )
 
     @property
@@ -121,6 +127,8 @@ class Settings:
                 missing.append("PRODUCTION_CANARY_APPROVED")
             if not self.production_catalog_approved:
                 missing.append("PRODUCTION_CATALOG_APPROVED")
+            if not self.production_catalog_fingerprint:
+                missing.append("PRODUCTION_CATALOG_FINGERPRINT")
             if self.square_environment != "production":
                 missing.append("SQUARE_ENVIRONMENT=production")
             if self.printful_mode != "production":
@@ -133,6 +141,8 @@ class Settings:
                 missing.append("PostgreSQL DATABASE_URL")
             if not self.admin_enabled:
                 missing.append("admin credentials + APP_SECRET_KEY")
+            if not self.support_email:
+                missing.append("SUPPORT_EMAIL")
             if not self.square_access_token:
                 missing.append("SQUARE_ACCESS_TOKEN")
             if not self.square_location_id:
@@ -152,6 +162,53 @@ class Settings:
                     "Production checkout prerequisites are not satisfied: "
                     + ", ".join(missing)
                 )
+
+
+    def validate_canary_safety(self) -> None:
+        missing: list[str] = []
+        if self.app_env != "production":
+            missing.append("APP_ENV=production")
+        if self.phase1_api_enabled:
+            missing.append("PHASE1_API_ENABLED=false")
+        if self.production_checkout_enabled:
+            missing.append("PRODUCTION_CHECKOUT_ENABLED=false")
+        if not self.production_canary_mode:
+            missing.append("PRODUCTION_CANARY_MODE=true")
+        if not self.phase0_5_approved:
+            missing.append("PHASE0_5_APPROVED=true")
+        if not self.production_catalog_approved:
+            missing.append("PRODUCTION_CATALOG_APPROVED=true")
+        if not self.production_catalog_fingerprint:
+            missing.append("PRODUCTION_CATALOG_FINGERPRINT")
+        if self.square_environment != "production":
+            missing.append("SQUARE_ENVIRONMENT=production")
+        if self.printful_mode != "production":
+            missing.append("PRINTFUL_MODE=production")
+        if not self.printful_confirm_enabled:
+            missing.append("PRINTFUL_CONFIRM_ENABLED=true")
+        if self.email_mode != "smtp":
+            missing.append("EMAIL_MODE=smtp")
+        if self.database_url.startswith("sqlite"):
+            missing.append("PostgreSQL DATABASE_URL")
+        if not self.square_access_token or not self.square_location_id:
+            missing.append("live Square credentials")
+        expected_square_webhook_url = f"{self.public_base_url}/api/v1/webhooks/square"
+        if not self.square_webhook_signature_key:
+            missing.append("SQUARE_WEBHOOK_SIGNATURE_KEY")
+        if self.square_webhook_notification_url != expected_square_webhook_url:
+            missing.append(f"SQUARE_WEBHOOK_NOTIFICATION_URL={expected_square_webhook_url}")
+        if not self.printful_token or not self.printful_store_id:
+            missing.append("live Printful credentials")
+        if not self.printful_webhook_secret_key:
+            missing.append("PRINTFUL_WEBHOOK_SECRET_KEY")
+        if not self.smtp_host or not self.email_from:
+            missing.append("working SMTP configuration")
+        if not self.admin_enabled:
+            missing.append("admin credentials + APP_SECRET_KEY")
+        if not self.support_email:
+            missing.append("SUPPORT_EMAIL")
+        if missing:
+            raise ValueError("Production canary prerequisites are not satisfied: " + ", ".join(missing))
 
 
 settings = Settings.from_env()

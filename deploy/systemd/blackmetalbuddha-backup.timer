@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Black Metal Buddha PostgreSQL backup
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+RandomizedDelaySec=15min
+Persistent=true
+Unit=blackmetalbuddha-backup.service
+
+[Install]
+WantedBy=timers.target

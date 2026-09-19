@@ -57,6 +57,7 @@ class Order(Base):
     payment_state: Mapped[str] = mapped_column(String(32), default="PENDING")
     fulfillment_state: Mapped[str] = mapped_column(String(32), default="NOT_STARTED")
     order_state: Mapped[str] = mapped_column(String(32), default="PENDING_PAYMENT")
+    is_canary: Mapped[bool] = mapped_column(Boolean, default=False)
     square_payment_link_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     square_checkout_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     square_order_id: Mapped[str | None] = mapped_column(String(128), unique=True, nullable=True)

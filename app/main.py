@@ -15,8 +15,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from .admin import router as admin_router
 from .api_phase1 import router as phase1_router
 from .catalog import PRODUCT_BY_SLUG, PRODUCTS
+from .catalog_ops import assert_production_catalog
 from .db import SessionLocal, init_db
 from .orders import get_order
+from .rate_limit import limiter
 from .settings import settings as phase1_settings
 from .storefront import price_floor_by_product, sellable_catalog, sellable_variants_for_product
 
@@ -36,6 +38,12 @@ async def lifespan(_: FastAPI):
     # may auto-create the current schema for convenience.
     if phase1_settings.app_env != "production":
         init_db()
+    elif phase1_settings.phase1_api_enabled:
+        with SessionLocal() as session:
+            assert_production_catalog(
+                session,
+                phase1_settings.production_catalog_fingerprint,
+            )
     yield
 
 
@@ -75,6 +83,13 @@ async def security_headers(request: Request, call_next):
         "connect-src 'self'; "
         "base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
     )
+
+    sensitive_prefixes = ("/admin", "/checkout", "/orders/", "/api/")
+    if request.url.path.startswith(sensitive_prefixes):
+        response.headers["Cache-Control"] = "no-store, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
+
     return response
 
 
@@ -87,6 +102,7 @@ def page_context(request: Request, **kwargs):
         "default_description": DEFAULT_DESCRIPTION,
         "products": PRODUCTS,
         "phase1_enabled": phase1_settings.phase1_api_enabled,
+        "support_email": phase1_settings.support_email,
         **kwargs,
     }
 
@@ -293,13 +309,12 @@ def checkout(request: Request):
 
 @app.get("/orders/{order_number}", include_in_schema=False)
 def order_status(request: Request, order_number: str):
-    if not phase1_settings.phase1_api_enabled:
-        raise HTTPException(status_code=404, detail="Order status unavailable")
-
     with SessionLocal() as session:
         order = get_order(session, order_number)
         if order is None:
             raise HTTPException(status_code=404, detail="Order not found")
+        if not phase1_settings.phase1_api_enabled and not order.is_canary:
+            raise HTTPException(status_code=404, detail="Order status unavailable")
 
         if order.order_state == "PAID":
             heading = "Payment received."
@@ -337,6 +352,34 @@ def order_status(request: Request, order_number: str):
                 robots="noindex,nofollow",
             ),
         )
+
+
+@app.get("/contact", include_in_schema=False)
+def contact(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "contact.html",
+        page_context(
+            request,
+            title="Contact | Black Metal Buddha",
+            description="Contact Black Metal Buddha for order, product, shipping, or privacy support.",
+            canonical=f"{BASE_URL}/contact",
+        ),
+    )
+
+
+@app.get("/terms", include_in_schema=False)
+def terms(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "terms.html",
+        page_context(
+            request,
+            title="Terms of Sale | Black Metal Buddha",
+            description="Black Metal Buddha terms of sale for made-to-order merchandise.",
+            canonical=f"{BASE_URL}/terms",
+        ),
+    )
 
 
 @app.get("/shipping-returns", include_in_schema=False)
@@ -383,7 +426,7 @@ def robots() -> str:
 
 @app.get("/sitemap.xml", include_in_schema=False)
 def sitemap() -> Response:
-    paths = ["/", "/shop", "/about", "/faq", "/shipping-returns", "/privacy"]
+    paths = ["/", "/shop", "/about", "/faq", "/contact", "/terms", "/shipping-returns", "/privacy"]
     paths.extend(f"/products/{product.slug}" for product in PRODUCTS)
     urls = "".join(f"<url><loc>{BASE_URL}{path}</loc></url>" for path in paths)
     xml = f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>'
