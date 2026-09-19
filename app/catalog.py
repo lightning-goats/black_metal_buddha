@@ -11,6 +11,7 @@ class Product:
     image: str
     image_alt: str
     sku: str
+    series: str = "Core Collection"
 
 
 PRODUCTS = (
@@ -79,6 +80,7 @@ PRODUCTS = (
             "and bone-white and ritual-red details."
         ),
         sku="BMB-LONGCHENPA",
+        series="Lineage Series",
     ),
 )
 
