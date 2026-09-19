@@ -60,6 +60,11 @@ app.mount(
     StaticFiles(directory=ROOT / "black_metal_buddhist_prints" / "05_original_mockups"),
     name="prints",
 )
+app.mount(
+    "/print-assets",
+    StaticFiles(directory=ROOT / "black_metal_buddhist_prints"),
+    name="print-assets",
+)
 
 templates = Jinja2Templates(directory=ROOT / "app" / "templates")
 app.include_router(phase1_router)
@@ -183,8 +188,8 @@ def shop(request: Request):
             request,
             title="Shop Black Metal Buddha | Dark Buddhist-Inspired Apparel",
             description=(
-                "Explore the Black Metal Buddha launch collection: Lotus of the Void, "
-                "Dharma of Decay, and Meditate on Death."
+                "Explore Black Metal Buddha apparel including Lotus of the Void, Dharma of Decay, "
+                "Meditate on Death, and Longchenpa — Rest in Illusion."
             ),
             canonical=f"{BASE_URL}/shop",
             price_floors=storefront_price_floors(),
@@ -210,6 +215,7 @@ def product_detail(request: Request, slug: str):
         "description": product.description,
         "sku": product.sku,
         "brand": {"@type": "Brand", "name": SITE_NAME},
+        "category": product.series,
         "image": [f"{BASE_URL}{product.image}"],
         "url": f"{BASE_URL}/products/{product.slug}",
     }

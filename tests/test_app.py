@@ -23,6 +23,7 @@ def test_home_has_seo_products_and_branding():
     assert "Lotus of the Void" in response.text
     assert "Dharma of Decay" in response.text
     assert "Meditate on Death" in response.text
+    assert "Longchenpa — Rest in Illusion" in response.text
 
 
 def test_logo_asset_is_served():
@@ -54,6 +55,7 @@ def test_robots_and_sitemap():
     sitemap = client.get("/sitemap.xml")
     assert sitemap.status_code == 200
     assert "/products/meditate-on-death" in sitemap.text
+    assert "/products/longchenpa-rest-in-illusion" in sitemap.text
 
 
 def test_security_headers():
@@ -107,3 +109,16 @@ def test_terms_page_and_sitemap_entry():
     assert "Terms of Sale" in response.text
     sitemap = client.get("/sitemap.xml")
     assert "/terms" in sitemap.text
+
+
+def test_longchenpa_product_is_in_catalog_and_print_asset_is_served():
+    page = client.get("/products/longchenpa-rest-in-illusion")
+    assert page.status_code == 200
+    assert "Longchenpa — Rest in Illusion" in page.text
+    assert "Rest in Illusion." in page.text
+    assert "LINEAGE SERIES" in page.text
+    assert "/print-assets/02_two_ink_vector/longchenpa_rest_in_illusion_two_ink.svg" in page.text
+
+    art = client.get("/print-assets/02_two_ink_vector/longchenpa_rest_in_illusion_two_ink.svg")
+    assert art.status_code == 200
+    assert "image/svg+xml" in art.headers["content-type"]

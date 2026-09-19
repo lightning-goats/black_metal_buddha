@@ -1,6 +1,6 @@
 {
   "collection": "Black Metal Buddhist",
-  "prepared_date": "2026-09-17",
+  "prepared_date": "2026-09-19",
   "status": "Printer-review and sample-print handoff; not press-approved",
   "intended_garment": "Black",
   "canvas_pixels": [
@@ -113,6 +113,37 @@
         "bone": 3650,
         "red": 945
       }
+    },
+    {
+      "slug": "longchenpa_rest_in_illusion",
+      "title": "Longchenpa — Rest in Illusion",
+      "tagline": "REST IN ILLUSION",
+      "series": "Lineage Series",
+      "source_image_pixels": [
+        1122,
+        1402
+      ],
+      "placed_artwork_pixels": [
+        3235,
+        4560
+      ],
+      "placed_artwork_inches": [
+        10.78,
+        15.2
+      ],
+      "offset_inches": [
+        0.607,
+        0.4
+      ],
+      "effective_original_raster_ppi_at_placed_size": 73.8,
+      "raster_png": null,
+      "two_ink_svg": "02_two_ink_vector/longchenpa_rest_in_illusion_two_ink.svg",
+      "two_ink_png": null,
+      "vector_contour_count": {
+        "bone": 1118,
+        "red": 188
+      },
+      "status": "Approved design; two-ink vector source committed. Final Printful raster export and variant mapping pending selected garment/process."
     }
   ]
 }

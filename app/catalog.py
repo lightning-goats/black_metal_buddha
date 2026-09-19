@@ -11,6 +11,7 @@ class Product:
     image: str
     image_alt: str
     sku: str
+    series: str = "Core Collection"
 
 
 PRODUCTS = (
@@ -55,6 +56,31 @@ PRODUCTS = (
         image="/prints/meditate_on_death_REFERENCE_ONLY.jpg",
         image_alt="Black T-shirt mockup for Meditate on Death, featuring a skeletal monk, prayer beads, lotus petals, and red sun.",
         sku="BMB-MEDITATE",
+    ),
+    Product(
+        slug="longchenpa-rest-in-illusion",
+        name="Longchenpa — Rest in Illusion",
+        subtitle="Rest in Illusion.",
+        summary=(
+            "A wrathful vision of Longchenpa surrounded by reflections, dissolving appearances, "
+            "and dreamlike forms inspired by the contemplative theme of resting in illusion."
+        ),
+        description=(
+            "Longchenpa — Rest in Illusion is Black Metal Buddha's lineage-series interpretation "
+            "of the great Dzogchen master in a fierce visionary form. Mirrored lotus forms, "
+            "phantom faces, moon reflections, dissolving landscapes, smoke, and a blood-red eclipse "
+            "frame the central figure as reminders that appearances can be vivid without being solid. "
+            "The design draws its theme from contemplative teachings on illusion while remaining an "
+            "original artistic interpretation rather than a traditional iconographic depiction."
+        ),
+        image="/print-assets/02_two_ink_vector/longchenpa_rest_in_illusion_two_ink.svg",
+        image_alt=(
+            "Two-ink Black Metal Buddha artwork for Longchenpa — Rest in Illusion, "
+            "featuring a wrathful seated master, eclipse halo, phantom reflections, lotus imagery, "
+            "and bone-white and ritual-red details."
+        ),
+        sku="BMB-LONGCHENPA",
+        series="Lineage Series",
     ),
 )
 
