@@ -121,16 +121,16 @@
       "series": "Lineage Series",
       "source_image_pixels": null,
       "placed_artwork_pixels": [
-        2904,
-        4632
+        3234,
+        4523
       ],
       "placed_artwork_inches": [
-        9.68,
-        15.44
+        10.78,
+        15.077
       ],
       "offset_inches": [
-        1.12,
-        0.0
+        0.607,
+        0.52
       ],
       "effective_original_raster_ppi_at_placed_size": null,
       "raster_png": "01_transparent_png/longchenpa_rest_in_illusion_12x16_300dpi.png",
