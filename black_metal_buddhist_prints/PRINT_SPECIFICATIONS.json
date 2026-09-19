@@ -13,7 +13,7 @@
   ],
   "nominal_export_ppi": 300,
   "color_profile": "sRGB",
-  "source_detail_warning": "Raster PNGs are enlarged mockup extractions, not native 300-ppi original artwork. Traced vectors smooth existing shapes but do not restore missing detail.",
+  "source_detail_warning": "The first three raster designs were enlarged from generated mockup extractions. Longchenpa — Rest in Illusion is an exception: its transparent 300-DPI raster is rendered deterministically from the approved two-ink SVG master.",
   "designs": [
     {
       "slug": "lotus_of_the_void",
@@ -119,31 +119,33 @@
       "title": "Longchenpa — Rest in Illusion",
       "tagline": "REST IN ILLUSION",
       "series": "Lineage Series",
-      "source_image_pixels": [
-        1122,
-        1402
-      ],
+      "source_image_pixels": null,
       "placed_artwork_pixels": [
-        3235,
-        4560
+        3234,
+        4523
       ],
       "placed_artwork_inches": [
         10.78,
-        15.2
+        15.077
       ],
       "offset_inches": [
         0.607,
-        0.4
+        0.52
       ],
-      "effective_original_raster_ppi_at_placed_size": 73.8,
-      "raster_png": null,
+      "effective_original_raster_ppi_at_placed_size": null,
+      "raster_png": "01_transparent_png/longchenpa_rest_in_illusion_12x16_300dpi.png",
       "two_ink_svg": "02_two_ink_vector/longchenpa_rest_in_illusion_two_ink.svg",
-      "two_ink_png": null,
+      "two_ink_png": "03_two_ink_png/longchenpa_rest_in_illusion_two_ink_12x16_300dpi.png",
       "vector_contour_count": {
         "bone": 1118,
         "red": 188
       },
-      "status": "Approved design; two-ink vector source committed. Final Printful raster export and variant mapping pending selected garment/process."
+      "status": "Approved two-ink production artwork. Transparent 3600 x 4800 PNG rendered from the SVG at nominal 300 ppi; physical sample approval and final Printful variant mapping still required.",
+      "source_master": "02_two_ink_vector/longchenpa_rest_in_illusion_two_ink.svg",
+      "extracted_artwork_pixels": null,
+      "preview_png_on_black": "04_previews/longchenpa_rest_in_illusion_PNG_preview_on_black.jpg",
+      "preview_two_ink_on_black": "04_previews/longchenpa_rest_in_illusion_TWO_INK_preview_on_black.jpg",
+      "reference_only": "05_original_mockups/longchenpa_rest_in_illusion_REFERENCE_ONLY.jpg"
     }
   ]
 }
