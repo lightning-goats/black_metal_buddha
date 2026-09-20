@@ -16,10 +16,10 @@ def test_home_has_seo_products_and_branding():
     assert response.status_code == 200
     assert "<title>Black Metal Buddha" in response.text
     assert 'rel="canonical"' in response.text
-    assert "/static/brand/black-metal-buddha-logo.webp" in response.text
+    assert "/static/brand/black-metal-buddha-logo.svg" in response.text
     assert '"@type": "Organization"' in response.text
     assert '"@type": "WebSite"' in response.text
-    assert '"logo": "https://blackmetalbuddha.com/static/brand/black-metal-buddha-logo.webp"' in response.text
+    assert '"logo": "https://blackmetalbuddha.com/static/brand/black-metal-buddha-logo.svg"' in response.text
     assert "Lotus of the Void" in response.text
     assert "Dharma of Decay" in response.text
     assert "Meditate on Death" in response.text
@@ -27,9 +27,9 @@ def test_home_has_seo_products_and_branding():
 
 
 def test_logo_asset_is_served():
-    response = client.get("/static/brand/black-metal-buddha-logo.webp")
+    response = client.get("/static/brand/black-metal-buddha-logo.svg")
     assert response.status_code == 200
-    assert response.headers["content-type"].startswith("image/webp")
+    assert "image/svg+xml" in response.headers["content-type"]
     assert len(response.content) > 1000
 
 
