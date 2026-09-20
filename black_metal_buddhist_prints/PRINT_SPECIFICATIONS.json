@@ -13,73 +13,75 @@
   ],
   "nominal_export_ppi": 300,
   "color_profile": "sRGB",
-  "source_detail_warning": "The first three raster designs were enlarged from generated mockup extractions. Longchenpa — Rest in Illusion is an exception: its transparent 300-DPI raster is rendered deterministically from the approved two-ink SVG master.",
+  "source_detail_warning": "Lotus of the Void and Dharma of Decay were replaced September 19, 2026 with approved cross-free two-ink vector masters; their production rasters are deterministic SVG renders. Meditate on Death retains its existing raster/vector preparation. Longchenpa — Rest in Illusion is rendered from its approved two-ink SVG master.",
   "designs": [
     {
       "slug": "lotus_of_the_void",
       "title": "Lotus of the Void",
       "tagline": "NO SELF • NO FEAR",
-      "source_image_pixels": [
-        1254,
-        1254
-      ],
-      "extracted_artwork_pixels": [
-        664,
-        985
-      ],
+      "source_image_pixels": null,
+      "extracted_artwork_pixels": null,
       "placed_artwork_pixels": [
-        3135,
-        4650
+        3013,
+        4743
       ],
       "placed_artwork_inches": [
-        10.45,
-        15.5
+        10.043,
+        15.81
       ],
       "offset_inches": [
-        0.773,
-        0.25
+        0.927,
+        0.067
       ],
-      "effective_original_raster_ppi_at_placed_size": 63.5,
+      "effective_original_raster_ppi_at_placed_size": null,
       "raster_png": "01_transparent_png/lotus_of_the_void_12x16_300dpi.png",
       "two_ink_svg": "02_two_ink_vector/lotus_of_the_void_two_ink.svg",
       "two_ink_png": "03_two_ink_png/lotus_of_the_void_two_ink_12x16_300dpi.png",
       "vector_contour_count": {
-        "bone": 3774,
-        "red": 615
-      }
+        "bone": 1485,
+        "red": 564
+      },
+      "source_master": "02_two_ink_vector/lotus_of_the_void_two_ink.svg",
+      "preview_png_on_black": "04_previews/lotus_of_the_void_PNG_preview_on_black.jpg",
+      "preview_two_ink_on_black": "04_previews/lotus_of_the_void_TWO_INK_preview_on_black.jpg",
+      "reference_only": "05_original_mockups/lotus_of_the_void_REFERENCE_ONLY.jpg",
+      "cross_like_motifs_removed": true,
+      "art_revision": "2026-09-19-cross-free",
+      "status": "Approved cross-free two-ink production artwork. All active raster, vector, preview, and reference formats supersede earlier revisions. Physical sample approval is still required."
     },
     {
       "slug": "dharma_of_decay",
       "title": "Dharma of Decay",
       "tagline": "ALL THINGS PASS",
-      "source_image_pixels": [
-        1254,
-        1254
-      ],
-      "extracted_artwork_pixels": [
-        702,
-        974
-      ],
+      "source_image_pixels": null,
+      "extracted_artwork_pixels": null,
       "placed_artwork_pixels": [
-        3351,
-        4650
+        3456,
+        4663
       ],
       "placed_artwork_inches": [
-        11.17,
-        15.5
+        11.52,
+        15.543
       ],
       "offset_inches": [
-        0.413,
-        0.25
+        0.377,
+        0.233
       ],
-      "effective_original_raster_ppi_at_placed_size": 62.8,
+      "effective_original_raster_ppi_at_placed_size": null,
       "raster_png": "01_transparent_png/dharma_of_decay_12x16_300dpi.png",
       "two_ink_svg": "02_two_ink_vector/dharma_of_decay_two_ink.svg",
       "two_ink_png": "03_two_ink_png/dharma_of_decay_two_ink_12x16_300dpi.png",
       "vector_contour_count": {
-        "bone": 4266,
-        "red": 501
-      }
+        "bone": 2093,
+        "red": 362
+      },
+      "source_master": "02_two_ink_vector/dharma_of_decay_two_ink.svg",
+      "preview_png_on_black": "04_previews/dharma_of_decay_PNG_preview_on_black.jpg",
+      "preview_two_ink_on_black": "04_previews/dharma_of_decay_TWO_INK_preview_on_black.jpg",
+      "reference_only": "05_original_mockups/dharma_of_decay_REFERENCE_ONLY.jpg",
+      "cross_like_motifs_removed": true,
+      "art_revision": "2026-09-19-cross-free",
+      "status": "Approved cross-free two-ink production artwork. All active raster, vector, preview, and reference formats supersede earlier revisions. Physical sample approval is still required."
     },
     {
       "slug": "meditate_on_death",
