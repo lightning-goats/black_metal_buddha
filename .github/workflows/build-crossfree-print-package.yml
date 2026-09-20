@@ -1,0 +1,70 @@
+name: rebuild cross-free Lotus and Dharma print package
+
+on:
+  push:
+    branches:
+      - print/remove-crosslike-motifs
+    paths:
+      - "black_metal_buddhist_prints/02_two_ink_vector/lotus_of_the_void_two_ink.svg"
+      - "black_metal_buddhist_prints/02_two_ink_vector/dharma_of_decay_two_ink.svg"
+      - "black_metal_buddhist_prints/START_HERE_FOR_PRINTER.txt"
+      - "black_metal_buddhist_prints/MESSAGE_TO_PRINTER.txt"
+      - "tools/build_crossfree_print_package.py"
+      - ".github/workflows/build-crossfree-print-package.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pillow cairosvg
+      - run: python tools/build_crossfree_print_package.py
+      - name: Validate revised assets
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+
+          root = Path("black_metal_buddhist_prints")
+          for slug in ("lotus_of_the_void", "dharma_of_decay"):
+              raster = root / "01_transparent_png" / f"{slug}_12x16_300dpi.png"
+              two = root / "03_two_ink_png" / f"{slug}_two_ink_12x16_300dpi.png"
+              svg = root / "02_two_ink_vector" / f"{slug}_two_ink.svg"
+              for path in (raster, two, svg):
+                  assert path.exists() and path.stat().st_size > 0, path
+
+              for path in (raster, two):
+                  image = Image.open(path).convert("RGBA")
+                  assert image.size == (3600, 4800)
+                  dpi = image.info.get("dpi")
+                  assert dpi and abs(dpi[0] - 300) < 1 and abs(dpi[1] - 300) < 1
+                  assert image.getchannel("A").getextrema() == (0, 255)
+
+              text = svg.read_text()
+              assert 'viewBox="0 0 3600 4800"' in text
+              assert 'id="ink-bone"' in text
+              assert 'id="ink-red"' in text
+              assert "#E9E1D5" in text
+              assert "#971F1F" in text
+              assert "<image" not in text.lower()
+          PY
+      - name: Commit regenerated package
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add black_metal_buddhist_prints
+          if git diff --cached --quiet; then
+            echo "Package already current."
+          else
+            git commit -m "Regenerate cross-free Lotus and Dharma print packages"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi

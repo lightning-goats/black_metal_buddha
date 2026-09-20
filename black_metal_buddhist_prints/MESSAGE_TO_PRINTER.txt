@@ -1,44 +1,31 @@
-Hi — this package contains four Black Metal Buddha designs intended for
-sample printing on a black T-shirt.
+Hi — please use the CURRENT Black Metal Buddhist print package for all
+proofs and samples.
 
-Please review START_HERE_FOR_PRINTER.txt and PRINT_SPECIFICATIONS.json before
-printing.
+IMPORTANT: Lotus of the Void and Dharma of Decay were revised on
+September 19, 2026 specifically to remove cross-like / Christian-looking
+ornamental forms. Do not use any earlier cached versions of those designs.
 
-PRODUCTION FILES
-All production canvases are 12 x 16 inches, 3600 x 4800 pixels, transparent,
-and nominally 300 pixels/inch.
+Please start from the current transparent production PNG or current SVG
+master for the requested design. The standard canvas is 12 x 16 inches,
+3600 x 4800 pixels, with nominal 300-DPI raster metadata.
 
-For Lotus of the Void, Dharma of Decay, and Meditate on Death:
-- 01_transparent_png contains the closest raster version to the approved art.
-- 02_two_ink_vector and 03_two_ink_png contain simplified two-ink alternatives.
-- These three originated from generated shirt mockups; please inspect their
-  effective detail carefully at the intended output size.
+For Lotus of the Void and Dharma of Decay, the current approved art is the
+bone/red two-ink revision:
+  Bone:       #E9E1D5
+  Ritual Red: #971F1F
+  Black:      garment / transparent negative space
 
-For Longchenpa — Rest in Illusion:
-- 02_two_ink_vector/longchenpa_rest_in_illusion_two_ink.svg is the canonical
-  production master.
-- 01_transparent_png/longchenpa_rest_in_illusion_12x16_300dpi.png and
-  03_two_ink_png/longchenpa_rest_in_illusion_two_ink_12x16_300dpi.png are
-  matching transparent 3600 x 4800 raster exports derived from that SVG.
-- The intended inks are Bone #E9E1D5 and Ritual Red #971F1F, with the black
-  garment supplying negative space.
+Do not add crosses, inverted crosses, cruciform finials, or church-like
+cross ornament during cleanup or separation. If a small production feature
+must be changed, keep it within the existing crescents, circles, wheel,
+lotus, dot, thorn, or abstract Buddhist-compatible visual vocabulary and
+send a proof for approval.
 
-Please choose the appropriate source for the selected process; do not stack
-the 01 and 03 versions on top of one another.
+Do not print black-background previews or reference JPEGs as production
+files. Preserve transparent knockout areas and distressed texture.
 
-Do not print files from 04_previews or 05_original_mockups. Those are visual
-reference proofs only.
-
-Please preserve transparent knockout areas and intentional distressed texture.
-Confirm:
-- permitted print dimensions on the chosen garment
-- top-of-print / chest placement
-- handling of the dark-garment underbase
-- minimum printable line and knockout sizes
-- red reproduction
-- whether any process-specific simplification is required
-
-Please provide a proof and one physical sample for approval before any broader
-production run.
+Please confirm the permitted print size and chest placement for the selected
+garment, then supply a proof and one physical sample for approval before a
+larger run.
 
 Thank you.
