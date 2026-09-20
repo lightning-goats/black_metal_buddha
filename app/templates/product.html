@@ -2,13 +2,16 @@
 {% block content %}
 <section class="product-detail shell">
   <div class="product-detail-image">
-    <img src="{{ product.image }}" alt="{{ product.image_alt }}" width="1000" height="1000">
+    <div class="product-image-frame">
+      <img src="{{ product.image }}" alt="{{ product.image_alt }}" width="1200" height="1200">
+    </div>
+    <p class="image-caption">{{ product.series | upper }} · BLACK METAL BUDDHA</p>
   </div>
   <div class="product-detail-copy">
     <p class="eyebrow">{{ product.series | upper }}</p>
     <h1>{{ product.name }}</h1>
     <p class="product-subtitle">{{ product.subtitle }}</p>
-    <p>{{ product.description }}</p>
+    <div class="product-description">{{ product.description }}</div>
 
     {% if variants %}
       <div class="purchase-panel"
@@ -16,29 +19,33 @@
            data-product-slug="{{ product.slug }}"
            data-product-name="{{ product.name }}"
            data-product-image="{{ product.image }}">
-        <div class="field-group">
-          <label for="variant-{{ product.slug }}">Size</label>
-          <select id="variant-{{ product.slug }}" data-variant-select>
-            {% for variant in variants %}
-              <option
-                value="{{ variant.sku }}"
-                data-size="{{ variant.size }}"
-                data-color="{{ variant.color }}"
-                data-price-cents="{{ variant.retail_price_cents }}"
-                data-currency="{{ variant.currency }}">
-                {{ variant.size }} · {{ variant.color }} · {{ variant.price_display }}
-              </option>
-            {% endfor %}
-          </select>
+        <div class="purchase-grid">
+          <div class="field-group">
+            <label for="variant-{{ product.slug }}">Size</label>
+            <select id="variant-{{ product.slug }}" data-variant-select>
+              {% for variant in variants %}
+                <option
+                  value="{{ variant.sku }}"
+                  data-size="{{ variant.size }}"
+                  data-color="{{ variant.color }}"
+                  data-price-cents="{{ variant.retail_price_cents }}"
+                  data-currency="{{ variant.currency }}">
+                  {{ variant.size }} · {{ variant.color }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field-group field-small">
+            <label for="quantity-{{ product.slug }}">Qty</label>
+            <select id="quantity-{{ product.slug }}" data-quantity-select>
+              {% for quantity in range(1, 6) %}<option value="{{ quantity }}">{{ quantity }}</option>{% endfor %}
+            </select>
+          </div>
         </div>
-        <div class="field-group field-small">
-          <label for="quantity-{{ product.slug }}">Quantity</label>
-          <select id="quantity-{{ product.slug }}" data-quantity-select>
-            {% for quantity in range(1, 6) %}<option value="{{ quantity }}">{{ quantity }}</option>{% endfor %}
-          </select>
+        <div class="purchase-action-row">
+          <p class="purchase-price" data-purchase-price>{{ variants[0].price_display }}</p>
+          <button class="button button-primary" type="button" data-add-variant>Add to cart</button>
         </div>
-        <p class="purchase-price" data-purchase-price>{{ variants[0].price_display }}</p>
-        <button class="button button-primary" type="button" data-add-variant>Add to cart</button>
         <p class="microcopy">Price and availability are verified again by the server at checkout.</p>
       </div>
     {% else %}
@@ -51,14 +58,23 @@
     {% endif %}
   </div>
 </section>
-<section class="section shell product-notes">
-  <div><h2>Design notes</h2><p>{{ product.summary }}</p></div>
-  <div><h2>Production status</h2>
-    {% if variants %}
-      <p>This product has approved sellable variants in the store catalog.</p>
-    {% else %}
-      <p>Artwork is prepared for print review. Physical samples will be inspected before this design is offered for sale.</p>
-    {% endif %}
+
+<section class="product-notes-band">
+  <div class="shell product-notes">
+    <div>
+      <p class="note-number">01</p>
+      <h2>Design notes</h2>
+      <p>{{ product.summary }}</p>
+    </div>
+    <div>
+      <p class="note-number">02</p>
+      <h2>Production status</h2>
+      {% if variants %}
+        <p>This product has approved sellable variants in the store catalog.</p>
+      {% else %}
+        <p>Artwork is prepared for print review. Physical samples will be inspected before this design is offered for sale.</p>
+      {% endif %}
+    </div>
   </div>
 </section>
 {% endblock %}
