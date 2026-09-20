@@ -1,0 +1,48 @@
+name: build approved logo asset
+
+on:
+  push:
+    branches:
+      - fix/logo-asset
+    paths:
+      - "tools/logo_asset.svg.gz.b64"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Decode approved logo
+        run: |
+          base64 -d tools/logo_asset.svg.gz.b64 | gzip -d > app/static/brand/black-metal-buddha-logo.svg
+          python - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          path = Path("app/static/brand/black-metal-buddha-logo.svg")
+          assert path.stat().st_size > 10000
+          root = ET.parse(path).getroot()
+          assert root.tag.endswith("svg")
+          text = path.read_text()
+          assert 'viewBox="0 0 1254 1254"' in text
+          assert "#971F1F" in text
+          assert "#F8F4EE" in text
+          assert "<image" not in text.lower()
+          PY
+
+      - name: Replace corrupt raster
+        run: |
+          rm -f app/static/brand/black-metal-buddha-logo.webp
+          rm -f tools/logo_asset.svg.gz.b64
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Regenerate approved Black Metal Buddha logo"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
