@@ -8,7 +8,7 @@
   <meta name="robots" content="{{ robots or 'index,follow,max-image-preview:large' }}">
   <link rel="canonical" href="{{ canonical }}">
   <link rel="icon" type="image/webp" href="/static/brand/black-metal-buddha-logo.webp">
-  <meta name="theme-color" content="#090909">
+  <meta name="theme-color" content="#050505">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="{{ site_name }}">
   <meta property="og:title" content="{{ title }}">
@@ -23,32 +23,62 @@
 </head>
 <body data-phase1-enabled="{{ 'true' if phase1_enabled else 'false' }}">
   <a class="skip-link" href="#main">Skip to content</a>
+
   <header class="site-header">
-    <div class="shell header-inner">
-      <a class="brand" href="/" aria-label="Black Metal Buddha home">
-        <img class="brand-logo" src="/static/brand/black-metal-buddha-logo.webp" alt="" width="64" height="64">
-        <span class="brand-name">BLACK METAL BUDDHA</span>
+    <div class="masthead shell">
+      <a class="masthead-mark" href="/" aria-label="Black Metal Buddha home">
+        <img class="masthead-logo" src="/static/brand/black-metal-buddha-logo.webp" alt="" width="230" height="230">
       </a>
-      <nav class="primary-nav" aria-label="Primary navigation">
-        <a href="/shop">Shop</a>
-        <a href="/about">About</a>
-        <a href="/faq">FAQ</a>
+      <div class="masthead-copy">
+        <p class="masthead-kicker">RITUAL APPAREL · IMPERMANENCE · NON-SELF</p>
+        <p class="masthead-name">BLACK METAL BUDDHA</p>
+      </div>
+    </div>
+    <div class="nav-rule">
+      <div class="shell nav-inner">
+        <nav class="primary-nav" aria-label="Primary navigation">
+          <a href="/shop">Shop</a>
+          <a href="/about">About</a>
+          <a href="/faq">FAQ</a>
+          <a href="/shipping-returns">Shipping</a>
+          <a href="/contact">Contact</a>
+        </nav>
         <a class="cart-link" href="/cart">Cart <span data-cart-count>0</span></a>
-      </nav>
+      </div>
     </div>
   </header>
+
   <main id="main">{% block content %}{% endblock %}</main>
+
   <footer class="site-footer">
-    <div class="shell footer-grid">
-      <div>
-        <img class="footer-logo" src="/static/brand/black-metal-buddha-logo.webp" alt="" width="84" height="84">
-        <p class="footer-brand">BLACK METAL BUDDHA</p>
-        <p class="muted">Ritual apparel for a fleeting world.</p>
+    <div class="shell footer-top">
+      <div class="footer-identity">
+        <img class="footer-logo" src="/static/brand/black-metal-buddha-logo.webp" alt="" width="128" height="128">
+        <div>
+          <p class="footer-brand">BLACK METAL BUDDHA</p>
+          <p class="muted">Ritual apparel for a fleeting world.</p>
+        </div>
       </div>
-      <div><p class="footer-heading">Explore</p><a href="/shop">Shop</a><a href="/about">About</a><a href="/faq">FAQ</a></div>
-      <div><p class="footer-heading">Information</p><a href="/shipping-returns">Shipping & Returns</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/contact">Contact</a></div>
+      <div class="footer-links">
+        <div>
+          <p class="footer-heading">Explore</p>
+          <a href="/shop">Shop</a>
+          <a href="/about">About</a>
+          <a href="/faq">FAQ</a>
+        </div>
+        <div>
+          <p class="footer-heading">Information</p>
+          <a href="/shipping-returns">Shipping & Returns</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/terms">Terms</a>
+          <a href="/contact">Contact</a>
+        </div>
+      </div>
     </div>
-    <div class="shell footer-bottom"><span>© 2026 Black Metal Buddha.</span><span>All things pass.</span></div>
+    <div class="shell footer-bottom">
+      <span>© 2026 Black Metal Buddha.</span>
+      <span>NO SELF · NO FEAR · ALL THINGS PASS</span>
+    </div>
   </footer>
 {% block scripts %}{% endblock %}
 </body>
