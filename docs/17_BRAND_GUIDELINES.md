@@ -1,7 +1,7 @@
 # Black Metal Buddha — Brand Identity Guidelines
 
 **Status:** Approved baseline  
-**Approved logo asset:** `app/static/brand/black-metal-buddha-logo.webp`
+**Approved logo asset:** `app/static/brand/black-metal-buddha-logo.svg`
 
 These rules apply to the website, packaging, marketplace listings, social graphics, future apparel, and generated design work.
 
@@ -37,10 +37,10 @@ The approved primary mark consists of:
 The current approved website asset is:
 
 ```
-app/static/brand/black-metal-buddha-logo.webp
+app/static/brand/black-metal-buddha-logo.svg
 ```
 
-The master image should remain archived separately at the highest available resolution when production/vector cleanup is performed later.
+The canonical site asset is now a validated SVG regenerated from the approved 1254 × 1254 source artwork. The original uploaded raster hash is recorded beside the asset for provenance.
 
 ### What made the approved direction work
 
@@ -233,7 +233,7 @@ The full wordmark lockup loses useful detail when made very small.
 
 For tiny uses (favicon/social avatar), a later simplified icon-only Dzogchen-A mark should be produced from the same approved identity rather than continually shrinking the full lockup.
 
-Until that icon is approved, the current asset may be used as a temporary favicon.
+Until that icon is approved, the current SVG may be used as the favicon.
 
 ## Do not
 
