@@ -122,3 +122,26 @@ def test_longchenpa_product_is_in_catalog_and_print_asset_is_served():
     art = client.get("/print-assets/02_two_ink_vector/longchenpa_rest_in_illusion_two_ink.svg")
     assert art.status_code == 200
     assert "image/svg+xml" in art.headers["content-type"]
+
+
+def test_mockup_restyled_home_structure():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert 'class="masthead shell"' in response.text
+    assert 'class="nav-rule"' in response.text
+    assert 'class="hero-frame"' in response.text
+    assert 'class="collection-band"' in response.text
+    assert 'class="manifesto shell"' in response.text
+    assert "/static/brand/black-metal-buddha-logo.webp" in response.text
+
+
+def test_mockup_restyled_shop_and_product_structure():
+    shop = client.get("/shop")
+    assert shop.status_code == 200
+    assert 'class="page-hero shell editorial-hero"' in shop.text
+    assert 'class="product-grid product-grid-shop"' in shop.text
+
+    product = client.get("/products/lotus-of-the-void")
+    assert product.status_code == 200
+    assert 'class="product-image-frame"' in product.text
+    assert 'class="product-notes-band"' in product.text
