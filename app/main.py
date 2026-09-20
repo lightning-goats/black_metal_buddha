@@ -25,7 +25,7 @@ from .storefront import price_floor_by_product, sellable_catalog, sellable_varia
 ROOT = Path(__file__).resolve().parents[1]
 BASE_URL = os.getenv("PUBLIC_BASE_URL", "https://blackmetalbuddha.com").rstrip("/")
 SITE_NAME = "Black Metal Buddha"
-LOGO_PATH = "/static/brand/black-metal-buddha-logo.webp"
+LOGO_PATH = "/static/brand/black-metal-buddha-logo.svg"
 DEFAULT_DESCRIPTION = (
     "Black Metal Buddha creates dark ritual apparel inspired by impermanence, mortality, "
     "non-self, and contemplative Buddhist themes."
