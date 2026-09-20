@@ -1,46 +1,84 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="hero shell">
-  <div class="hero-copy">
-    <p class="eyebrow">BLACK METAL BUDDHA</p>
-    <h1>Ritual apparel<br>for a fleeting world.</h1>
-    <p class="hero-lead">Black-metal visual language shaped around impermanence, mortality, non-self, and the contemplative traditions that refuse to look away.</p>
-    <div class="actions">
-      <a class="button button-primary" href="/shop">Enter the collection</a>
-      <a class="button button-ghost" href="/about">Read the manifesto</a>
-    </div>
+<section class="hero hero-ritual">
+  <div class="hero-atmosphere" aria-hidden="true">
+    <img class="hero-art hero-art-left" src="/print-assets/02_two_ink_vector/lotus_of_the_void_two_ink.svg" alt="">
+    <img class="hero-art hero-art-right" src="/print-assets/02_two_ink_vector/dharma_of_decay_two_ink.svg" alt="">
   </div>
-  <div class="hero-art">
+
+  <div class="hero-side hero-side-left" aria-hidden="true">
+    <span>ART</span>
+    <span>APPAREL</span>
+    <span>AWARENESS</span>
+    <span>IMPERMANENCE</span>
+    <span>ALWAYS</span>
+  </div>
+
+  <div class="hero-copy">
     <div class="hero-frame">
-      <img src="/prints/lotus_of_the_void_REFERENCE_ONLY.jpg" alt="Lotus of the Void black T-shirt mockup" width="900" height="900">
+      <img src="/static/brand/black-metal-buddha-logo.webp" alt="Black Metal Buddha" width="360" height="360">
     </div>
-    <p class="hero-caption">LOTUS OF THE VOID · NO SELF / NO FEAR</p>
+    <p class="eyebrow hero-kicker">Ritual apparel inspired by impermanence</p>
+    <h1>Black Metal Buddha</h1>
+    <a class="button button-primary hero-cta" href="/shop">Shop now <span aria-hidden="true">→</span></a>
+    <p class="hero-mantra">
+      <span>No self</span><i aria-hidden="true">✦</i><span>No fear</span><i aria-hidden="true">✦</i><span>All things pass</span>
+    </p>
+  </div>
+
+  <div class="hero-side hero-side-right" aria-hidden="true">
+    <span>IMPERMANENCE</span>
+    <span>LOOKS GOOD</span>
+    <span>ON YOU</span>
+    <b></b>
+    <span>WEAR</span>
+    <span>REFLECT</span>
+    <span>RELEASE</span>
+    <span>REPEAT</span>
   </div>
 </section>
 
 <section class="collection-band">
   <div class="shell section-heading collection-heading">
+    <span class="heading-rule" aria-hidden="true"></span>
     <div>
-      <p class="eyebrow">THE COLLECTION</p>
-      <h2>{{ products | length }} designs. One reminder.</h2>
+      <p class="eyebrow">Featured collection</p>
+      <h2>Three paths. One truth. All things pass.</h2>
     </div>
-    <a class="text-link" href="/shop">View all designs →</a>
+    <span class="heading-rule" aria-hidden="true"></span>
+    <a class="button button-ghost collection-view-all" href="/shop">View all products <span aria-hidden="true">→</span></a>
   </div>
+
   <div class="shell product-grid product-grid-home">
-    {% for item in products %}{% include "partials/product_card.html" %}{% endfor %}
+    {% set home_featured = true %}
+    {% for item in products[:3] %}{% include "partials/product_card.html" %}{% endfor %}
   </div>
+
+  {% if products | length > 3 %}
+  <div class="shell collection-coda">
+    <span>Lineage series</span>
+    <a href="/products/longchenpa-rest-in-illusion">Longchenpa — Rest in Illusion <span aria-hidden="true">→</span></a>
+  </div>
+  {% endif %}
 </section>
 
 <section class="manifesto shell">
-  <div class="manifesto-number">01</div>
-  <div>
-    <p class="eyebrow">THE PRACTICE</p>
-    <h2>Wear the image.<br>Remember the teaching.</h2>
+  <div class="manifesto-lead">
+    <p class="eyebrow">More than merchandise.</p>
+    <h2>A practice.</h2>
+    <p>Black Metal Buddha fuses the raw intensity of black metal with contemplative Buddhist philosophy.</p>
   </div>
+
+  <div class="manifesto-divider" aria-hidden="true"></div>
+
   <div class="manifesto-copy">
-    <p>Black Metal Buddha is an independent apparel project exploring impermanence, mortality, non-self, and contemplative symbolism through an extreme-metal visual language.</p>
-    <p>These pieces are not costumes of spirituality. They are reminders: forms decay, identities shift, and nothing held tightly stays unchanged.</p>
-    <a class="text-link" href="/about">More about the project →</a>
+    <p>Our apparel is a reminder: all things are impermanent. Through darkness we find clarity. Through decay we find beauty. Through emptiness we find freedom.</p>
+    <a class="button button-ghost" href="/about">Our story <span aria-hidden="true">→</span></a>
+  </div>
+
+  <div class="manifesto-art" aria-hidden="true">
+    <img src="/print-assets/02_two_ink_vector/lotus_of_the_void_two_ink.svg" alt="">
+    <p>Impermanence<br>Compassion<br>Detachment<br>Freedom</p>
   </div>
 </section>
 {% endblock %}
