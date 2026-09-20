@@ -1,16 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="page-hero shell">
-  <p class="eyebrow">THE COLLECTION</p>
-  <h1>Black Metal Buddhist Apparel</h1>
+<section class="page-hero shell editorial-hero">
+  <div class="page-index">SHOP / 01</div>
+  <div>
+    <p class="eyebrow">THE COLLECTION</p>
+    <h1>Black Metal Buddhist Apparel</h1>
+  </div>
+  <div class="page-hero-copy">
   {% if phase1_enabled and price_floors %}
     <p>Choose a design, size, and quantity. Checkout is handled securely through Square.</p>
   {% else %}
-    <p>The collection is in sample validation. Browse the art now; purchasing will open after each product has approved production variants and the final launch checks pass.</p>
+    <p>The collection is in sample validation. Browse the art now; purchasing opens only after each product has approved production variants and the final launch checks pass.</p>
   {% endif %}
+  </div>
 </section>
 <section class="section shell">
-  <div class="product-grid">
+  <div class="product-grid product-grid-shop">
     {% for item in products %}{% include "partials/product_card.html" %}{% endfor %}
   </div>
 </section>
