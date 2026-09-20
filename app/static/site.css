@@ -847,7 +847,6 @@ textarea {
 }
 
 .hero-kicker {
-  order: 2;
   margin: .2rem 0 .5rem;
   color: var(--bone);
   font-size: clamp(.58rem, .8vw, .72rem);
@@ -855,7 +854,6 @@ textarea {
 }
 
 .hero-copy h1 {
-  order: 1;
   margin: .1rem 0 .3rem;
   max-width: none;
   font-family: Georgia, "Times New Roman", serif;
@@ -867,13 +865,6 @@ textarea {
   text-shadow: 0 3px 20px rgba(0,0,0,.8);
 }
 
-.hero-frame + .hero-kicker {
-  order: 0;
-}
-
-.hero-frame {
-  order: -1;
-}
 
 .hero-cta {
   margin-top: 1rem;
